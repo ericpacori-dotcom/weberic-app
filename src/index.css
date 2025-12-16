@@ -4,19 +4,42 @@
 
 /* --- ANIMACIONES PERSONALIZADAS --- */
 @layer utilities {
+  /* Entrada suave hacia arriba */
   .animate-fade-in-up {
-    animation: fadeInUp 0.5s ease-out forwards;
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
   
+  /* Entrada desde arriba (Navbar) */
+  .animate-slide-down {
+    animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Efecto de flotación (para elementos decorativos) */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* Efecto de flotación reverso (para variedad) */
+  .animate-float-delayed {
+    animation: float 7s ease-in-out 1s infinite;
+  }
+
+  /* Aparición tipo "Pop" (Modales y Alertas) */
+  .animate-pop-in {
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  /* Pulso suave */
   .animate-pulse-soft {
-    animation: pulseSoft 2s infinite;
+    animation: pulseSoft 3s infinite ease-in-out;
   }
 }
 
+/* --- KEYFRAMES --- */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -24,18 +47,39 @@
   }
 }
 
-@keyframes pulseSoft {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
   }
-  50% {
-    opacity: 0.9;
-    transform: scale(1.02);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Fondo base suave */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+/* Fondo base */
 body {
-  @apply bg-orange-50/50; /* Un tono crema muy suave */
+  background-color: #334E68; /* Azul Pizarra Base */
 }

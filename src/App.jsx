@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, Lock, CheckCircle, Star, Menu, X, User, 
   TrendingUp, Award, ChevronRight, Loader, LogOut, Video,
-  CalendarCheck, PenTool, BookOpen, ExternalLink, ChevronDown, ChevronUp, Briefcase, ArrowRight, Sparkles, Search, Trash2, RefreshCw
+  CalendarCheck, PenTool, BookOpen, ExternalLink, ChevronDown, ChevronUp, Briefcase, ArrowRight, Sparkles, Search, Trash2, RefreshCw, ArrowLeft
 } from 'lucide-react';
 
 // FIREBASE IMPORTS
@@ -15,151 +15,376 @@ import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 // --- IMPORTAMOS LOS 15 CURSOS ---
 import { ALL_COURSES } from './content/courses_data';
 
+// --- PALETA DE COLORES ---
+const COLORS = {
+  bgMain: "bg-[#334E68]",       // Azul Pizarra Profundo
+  bgCard: "bg-[#486581]",       // Azul Pizarra Medio
+  bgLighter: "bg-[#627D98]",    // Azul Pizarra Claro
+  
+  accentOrange: "bg-[#F9703E]", // Naranja Quemado Vibrante
+  textOrange: "text-[#F9703E]", // Texto Naranja
+  
+  textLight: "text-[#F0F4F8]",  // Blanco Grisáceo
+  textMuted: "text-[#BCCCDC]",  // Gris Azulado Claro
+  
+  borderSoft: "border-[#486581]", 
+};
+
+// --- COMPONENTE DE FONDO NEURONAL ---
+const NeuralBackground = () => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+    let particles = [];
+
+    const particleCount = 70; 
+    const connectionDistance = 160; 
+    const moveSpeed = 0.4; 
+
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * moveSpeed;
+        this.vy = (Math.random() - 0.5) * moveSpeed;
+        this.size = Math.random() * 2 + 1;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((particle, index) => {
+        particle.update();
+        particle.draw();
+        for (let j = index; j < particles.length; j++) {
+          const dx = particles[j].x - particle.x;
+          const dy = particles[j].y - particle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < connectionDistance) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 * (1 - distance / connectionDistance)})`;
+            ctx.lineWidth = 0.8; 
+            ctx.moveTo(particle.x, particle.y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      });
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    animate();
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" style={{ background: 'transparent' }} />;
+};
+
 // --- COMPONENTES UI REUTILIZABLES ---
 
 const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false }) => {
-  const baseStyle = "px-8 py-3 rounded-full font-bold transition-all duration-300 ease-in-out flex items-center justify-center gap-2 text-sm tracking-wide transform hover:-translate-y-1 active:translate-y-0";
+  const baseStyle = "px-8 py-3 rounded-full font-bold transition-all duration-300 ease-out flex items-center justify-center gap-2 text-sm tracking-wide active:scale-95 shadow-lg hover:shadow-xl transform relative z-10 select-none";
   const variants = {
-    primary: "bg-gradient-to-r from-orange-400 to-pink-500 text-white hover:shadow-xl hover:shadow-orange-500/30",
-    secondary: "bg-white text-slate-700 border-2 border-orange-100 hover:border-orange-300 hover:bg-orange-50/50 hover:shadow-md",
-    outline: "border-2 border-orange-400 text-orange-500 hover:bg-orange-50",
-    google: "bg-white text-slate-700 border-2 border-slate-200 hover:border-orange-300 hover:bg-orange-50/30 hover:shadow-md", 
-    danger: "bg-red-500 text-white hover:bg-red-600 hover:shadow-red-500/30",
-    warning: "bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:shadow-lg hover:shadow-purple-500/30"
+    primary: `${COLORS.accentOrange} text-white hover:bg-[#DE5E2E] hover:-translate-y-1`,
+    secondary: `bg-transparent border-2 border-[#F9703E] ${COLORS.textOrange} hover:bg-[#F9703E]/10`,
+    outline: `bg-transparent border-2 ${COLORS.borderSoft} ${COLORS.textMuted} hover:bg-[#486581] hover:text-white`,
+    google: `bg-white text-[#334E68] hover:bg-gray-100 hover:-translate-y-1`, 
+    danger: "bg-[#EF4444] text-white hover:bg-[#DC2626]",
   };
-  return (
-    <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${variants[variant]} ${disabled ? 'opacity-60 cursor-not-allowed hover:translate-y-0 hover:shadow-none' : ''} ${className}`}>
-      {children}
-    </button>
-  );
+  return <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${variants[variant]} ${disabled ? 'opacity-60 cursor-not-allowed hover:translate-y-0' : ''} ${className}`}>{children}</button>;
 };
 
-const Badge = ({ children, color = 'peach', className = '' }) => {
-  const colors = { 
-    peach: 'bg-orange-100 text-orange-700', 
-    teal: 'bg-teal-100 text-teal-800', 
-    blue: 'bg-blue-100 text-blue-700',
-    purple: 'bg-purple-100 text-purple-700',
+const Badge = ({ children, color = 'orange', className = '' }) => {
+  const styles = { 
+    orange: `bg-[#F9703E]/20 ${COLORS.textOrange} border border-[#F9703E]/30`, 
+    blue: `bg-[#486581] ${COLORS.textMuted} border border-[#627D98]`, 
+    light: `bg-[#F0F4F8] text-[#334E68]`,
   };
-  return <span className={`px-4 py-1.5 rounded-full text-xs font-extrabold tracking-wider uppercase ${colors[color]} ${className}`}>{children}</span>;
+  const finalStyle = styles[color] || styles.orange;
+  return <span className={`px-4 py-1.5 rounded-full text-xs font-black tracking-wider uppercase ${finalStyle} ${className} transition-transform hover:scale-105 cursor-default select-none`}>{children}</span>;
 };
 
-// --- COMPONENTE NAVBAR ---
-// Lo definimos fuera para evitar re-renders innecesarios
-const Navbar = ({ user, userData, setView, handleLogin, handleLogout, resetDatabase }) => (
-  <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-orange-100/50 py-2">
-    <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-20">
+// --- NAVBAR ---
+const Navbar = ({ user, userData, setView, handleLogin, handleLogout }) => (
+  <nav className={`sticky top-0 z-50 bg-[#334E68]/80 border-b border-[#486581] py-3 shadow-2xl animate-slide-down backdrop-blur-md bg-opacity-95 select-none`}>
+    <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
       <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setView('home')}>
-        <div className="bg-gradient-to-tr from-orange-400 to-pink-500 p-3 rounded-2xl shadow-lg shadow-orange-200 group-hover:shadow-orange-300 group-hover:scale-110 transition-all duration-300">
-          <TrendingUp size={26} className="text-white" />
-        </div>
-        <span className="font-black text-2xl text-slate-800 tracking-tight">
-          Emprende<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500">Pro</span>
+        <img src="/logo.png" alt="Logo haeric Activos" className="w-11 h-11 object-contain group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 drop-shadow-md" />
+        <span className={`font-black text-2xl ${COLORS.textLight} tracking-tight`}>
+          haeric <span className={`${COLORS.textOrange} group-hover:text-white transition-colors duration-300`}>Activos</span>
         </span>
       </div>
       <div className="flex items-center gap-4">
-        <Button 
-          onClick={resetDatabase} 
-          variant="danger" 
-          className="hidden md:flex text-xs py-2 px-4 bg-red-500 border-none"
-        >
-           <RefreshCw size={14}/> RESET DB
-        </Button>
-
+        {/* BOTÓN RESET ELIMINADO AQUÍ */}
+        
         {user ? (
-          <div className="flex items-center gap-4 bg-white p-2 pr-4 rounded-full border-2 border-orange-100 shadow-sm">
-            <img src={user.photoURL} className="w-10 h-10 rounded-full border-2 border-white shadow-sm" alt="user" />
-            {userData.isSubscribed && <div className="hidden md:flex bg-gradient-to-r from-amber-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm">PRO</div>}
-            <button onClick={handleLogout} className="text-slate-400 hover:text-red-400 transition-all hover:bg-red-50 p-2 rounded-full"><LogOut size={20}/></button>
+          <div className={`flex items-center gap-4 ${COLORS.bgCard} p-2 pr-4 rounded-full border border-[#627D98] shadow-inner transition-all hover:border-[#F9703E]`}>
+            <img src={user.photoURL} className={`w-9 h-9 rounded-full border-2 border-[#F9703E]`} alt="user" />
+            {userData.isSubscribed && <div className={`${COLORS.accentOrange} text-white px-3 py-0.5 rounded-full text-[10px] font-bold shadow-sm animate-pulse`}>PRO</div>}
+            <button onClick={handleLogout} className={`${COLORS.textMuted} hover:text-[#EF4444] transition-colors p-2 hover:bg-[#334E68] rounded-full`}><LogOut size={18}/></button>
           </div>
         ) : (
-          <Button onClick={handleLogin} variant="google" className="text-sm font-bold">
-            <User size={18} className="text-orange-500"/> Iniciar Sesión
-          </Button>
+          <Button onClick={handleLogin} variant="google" className="text-sm font-bold rounded-full px-6 shadow-sm"><User size={18} className="text-[#334E68]"/> Entrar</Button>
         )}
       </div>
     </div>
   </nav>
 );
 
-// --- COMPONENTE HOME VIEW ---
-// Recibe props en lugar de usar variables globales
+// --- HOME VIEW ---
 const HomeView = ({ 
   courses, loadingCourses, userData, user, handleCourseClick, 
-  searchTerm, setSearchTerm, // Props del buscador
-  setView, handleLogin, handleLogout, resetDatabase 
+  searchTerm, setSearchTerm, 
+  setView, handleLogin, handleLogout 
 }) => {
   
-  // Lógica de filtrado dentro del componente Home
-  const filteredCourses = courses.filter(course => 
-    course.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    course.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const containerRef = useRef(null);
+  const cardsRef = useRef([]); 
+  
+  const state = useRef({
+    position: 0,
+    velocity: 0,
+    isDragging: false,
+    startX: 0,
+    lastX: 0,
+    targetPosition: 0,
+    isSnapping: false
+  });
+
+  const requestRef = useRef();
+
+  const filteredCourses = courses.filter(course => {
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) return true;
+    return (
+      course.title.toLowerCase().includes(term) || 
+      course.category.toLowerCase().includes(term) ||
+      (course.description && course.description.toLowerCase().includes(term))
+    );
+  });
+
+  const CARD_WIDTH = 340; 
+  const CARD_SPACING = 360; 
+  const VISIBLE_CARDS = 7; 
+
+  useEffect(() => {
+    state.current.position = 0;
+    state.current.velocity = 2; 
+  }, [searchTerm]);
+
+  const animate = () => {
+    if (!containerRef.current) return;
+
+    const s = state.current;
+
+    if (!s.isDragging) {
+      s.position += s.velocity;
+      s.velocity *= 0.95; 
+      
+      if (Math.abs(s.velocity) < 0.1) s.velocity = 0;
+    }
+
+    const totalWidth = filteredCourses.length * CARD_SPACING;
+    const centerOffset = window.innerWidth / 2;
+
+    if (filteredCourses.length > 0) {
+      filteredCourses.forEach((course, index) => {
+        const card = cardsRef.current[index];
+        if (!card) return;
+
+        let cardX = index * CARD_SPACING + s.position;
+
+        if (totalWidth > 0) {
+           while (cardX > totalWidth / 2 + centerOffset) cardX -= totalWidth;
+           while (cardX < -totalWidth / 2 - centerOffset) cardX += totalWidth;
+        }
+
+        const distToCenter = (cardX + CARD_WIDTH/2) - centerOffset;
+        const absDist = Math.abs(distToCenter);
+
+        const maxDist = 600; 
+        let scale = 1;
+        let rotateY = 0;
+        let opacity = 1;
+        let blur = 0;
+        let zIndex = 10;
+
+        if (absDist < maxDist) {
+          const ratio = absDist / maxDist;
+          scale = 1 - (ratio * 0.25);
+          rotateY = distToCenter / 20;
+          opacity = 1 - (ratio * 0.5);
+          blur = ratio * 4;
+          zIndex = 100 - Math.round(ratio * 50);
+        } else {
+          scale = 0.75;
+          opacity = 0.5;
+          blur = 4;
+          zIndex = 1;
+        }
+
+        card.style.transform = `translate3d(${cardX}px, 0, 0) perspective(1000px) rotateY(${rotateY}deg) scale(${scale})`;
+        card.style.opacity = opacity;
+        card.style.filter = `blur(${blur}px)`;
+        card.style.zIndex = zIndex;
+        card.style.borderColor = absDist < 150 ? '#F9703E' : '#627D98';
+      });
+    }
+
+    requestRef.current = requestAnimationFrame(animate);
+  };
+
+  useEffect(() => {
+    requestRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(requestRef.current);
+  }, [filteredCourses]);
+
+  const handleStart = (clientX) => {
+    const s = state.current;
+    s.isDragging = true;
+    s.startX = clientX;
+    s.lastX = clientX;
+    s.velocity = 0; 
+  };
+
+  const handleMove = (clientX) => {
+    const s = state.current;
+    if (!s.isDragging) return;
+    
+    const delta = clientX - s.lastX;
+    s.position += delta; 
+    s.lastX = clientX;
+    s.velocity = delta; 
+  };
+
+  const handleEnd = () => {
+    state.current.isDragging = false;
+  };
+
+  const onTouchStart = (e) => handleStart(e.touches[0].clientX);
+  const onTouchMove = (e) => handleMove(e.touches[0].clientX);
+  const onMouseDown = (e) => handleStart(e.clientX);
+  const onMouseMove = (e) => { if(state.current.isDragging) { e.preventDefault(); handleMove(e.clientX); }};
+  
+  const handleCardClick = (course) => {
+    if (Math.abs(state.current.velocity) > 2) return;
+    handleCourseClick(course);
+  };
 
   return (
-    <div className="pb-20 bg-orange-50/30 min-h-screen font-sans animate-fade-in-up">
-      <Navbar user={user} userData={userData} setView={setView} handleLogin={handleLogin} handleLogout={handleLogout} resetDatabase={resetDatabase} />
+    <div className={`pb-20 min-h-screen font-sans relative z-10 overflow-x-hidden select-none`}>
+      <Navbar user={user} userData={userData} setView={setView} handleLogin={handleLogin} handleLogout={handleLogout} />
       
-      <div className="relative py-24 px-6 text-center overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-gradient-to-br from-orange-200 to-pink-200 rounded-full blur-3xl opacity-60 animate-pulse-soft"></div>
-        <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[50%] bg-gradient-to-tl from-teal-200 to-blue-200 rounded-full blur-3xl opacity-60 animate-pulse-soft" style={{animationDelay: '2s'}}></div>
-        <div className="max-w-5xl mx-auto relative z-10">
-          <Badge color="peach" className="mb-6 inline-block shadow-sm"><Sparkles size={14} className="inline mr-1"/> CATÁLOGO PREMIUM</Badge>
-          <h1 className="text-6xl md:text-7xl font-black mb-8 tracking-tight leading-tight text-slate-900">
-            Emprende con IA <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-pink-500 to-teal-500">desde hoy.</span>
+      {/* HERO SECTION */}
+      <div className={`relative py-12 px-6 text-center overflow-hidden z-10`}>
+        <div className="max-w-5xl mx-auto relative animate-fade-in-up">
+          <Badge color="orange" className="mb-6 shadow-lg inline-block"><Sparkles size={14} className="inline mr-1 animate-pulse"/> CATÁLOGO PREMIUM</Badge>
+          <h1 className={`text-5xl md:text-7xl font-black mb-6 tracking-tight leading-tight ${COLORS.textLight} drop-shadow-xl`}>
+            Crea Activos con IA  <br/>
+            <span className={`${COLORS.textOrange} inline-block`}>Monetiza desde hoy.</span>
           </h1>
-          <p className="text-slate-600 text-2xl max-w-3xl mx-auto mb-12 leading-relaxed font-medium">
-            15 Modelos de negocio validados listos para copiar y pegar.
-          </p>
-
-          {/* --- BARRA DE BÚSQUEDA INTELIGENTE --- */}
-          <div className="max-w-xl mx-auto relative group">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Search className="h-6 w-6 text-slate-400 group-focus-within:text-orange-500 transition-colors" />
+          
+          <div className="max-w-xl mx-auto relative group z-20 mb-8">
+            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+              <Search className={`h-6 w-6 ${COLORS.textMuted} group-focus-within:text-[#F9703E] transition-colors`} />
             </div>
             <input 
               type="text" 
-              placeholder="Buscar curso (ej: YouTube, Dropshipping, Ebooks...)"
+              placeholder="Buscar curso..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-5 rounded-full border-2 border-white bg-white/80 backdrop-blur-md shadow-xl text-lg font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-orange-300 focus:ring-4 focus:ring-orange-100 transition-all"
+              className={`w-full pl-14 pr-6 py-4 rounded-full border border-[#627D98] ${COLORS.bgCard} shadow-2xl text-lg font-bold ${COLORS.textLight} placeholder:${COLORS.textMuted} focus:outline-none focus:border-[#F9703E] focus:ring-1 focus:ring-[#F9703E] transition-all duration-300 focus:shadow-[#F9703E]/20 select-text`}
             />
           </div>
         </div>
       </div>
       
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        {loadingCourses ? <div className="flex justify-center py-20"><div className="bg-white p-8 rounded-full shadow-xl"><Loader className="animate-spin text-orange-500" size={50}/></div></div> : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-            {filteredCourses.length > 0 ? filteredCourses.map((course) => {
+      {/* --- CARRUSEL INFINITO PHYSICS --- */}
+      <div 
+        ref={containerRef}
+        className="relative w-full h-[600px] z-10 cursor-grab active:cursor-grabbing touch-pan-y outline-none"
+        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={handleEnd}
+        onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={handleEnd} onMouseLeave={handleEnd}
+      >
+        
+        {loadingCourses ? (
+          <div className="flex justify-center h-full items-center"><Loader className={`animate-spin ${COLORS.textOrange}`} size={50}/></div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="text-center pt-20">
+            <p className={`${COLORS.textMuted} text-xl font-bold`}>No encontramos cursos 🔍</p>
+            <button onClick={() => setSearchTerm("")} className={`mt-4 ${COLORS.textOrange} font-bold underline hover:text-white transition-colors`}>Ver todos</button>
+          </div>
+        ) : (
+          <div className="relative w-full h-full overflow-hidden">
+            {filteredCourses.map((course, index) => {
                const price = Number(course.price) || 0;
                const isUnlocked = course.isFree || userData.isSubscribed || userData.purchasedCourses.includes(course.id);
+
                return (
-                <div key={course.id} onClick={() => handleCourseClick(course)} className="group bg-white rounded-[2.5rem] overflow-hidden border-2 border-orange-50 shadow-xl shadow-orange-100/50 hover:shadow-2xl hover:shadow-orange-200/50 hover:border-orange-300 transition-all duration-500 cursor-pointer flex flex-col h-full hover:-translate-y-3">
-                  <div className="relative h-64 overflow-hidden p-4 pb-0">
-                    <img src={course.image} alt={course.title} className={`w-full h-full object-cover rounded-[2rem] shadow-sm transition-transform duration-700 group-hover:scale-110 ${!isUnlocked ? 'grayscale opacity-80' : ''}`} />
-                    <div className="absolute top-8 left-8"><Badge color="teal" className="shadow-md">{course.category}</Badge></div>
-                    {!isUnlocked && (<div className="absolute inset-0 bg-slate-900/30 flex items-center justify-center backdrop-blur-[2px] m-4 rounded-[2rem]"><div className="bg-white/90 p-4 rounded-full shadow-lg"><Lock className="text-slate-700" size={32} /></div></div>)}
+                <div 
+                  key={course.id}
+                  ref={el => cardsRef.current[index] = el}
+                  className={`absolute top-10 left-0 w-[300px] md:w-[340px] h-[500px] rounded-[2.5rem] bg-[#486581] border-2 border-[#627D98] shadow-2xl overflow-hidden flex flex-col hover:border-[#F9703E] will-change-transform`}
+                  style={{ transform: 'translate3d(-1000px, 0, 0)' }} 
+                >
+                  <div className="relative h-64 overflow-hidden pointer-events-none">
+                    <img src={course.image} alt={course.title} className="w-full h-full object-cover select-none" draggable="false" />
+                    <div className="absolute top-5 left-5"><Badge color="light">{course.category}</Badge></div>
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-[#334E68]/70 backdrop-blur-[2px]">
+                        <div className={`${COLORS.bgLighter} p-4 rounded-full shadow-xl border border-[#F0F4F8]/20`}><Lock className="text-[#F0F4F8]" size={28} /></div>
+                      </div>
+                    )}
                   </div>
-                  <div className="p-8 flex-1 flex flex-col">
-                    <h3 className="text-2xl font-black text-slate-800 mb-4 leading-snug group-hover:text-orange-500 transition-colors line-clamp-2">{course.title}</h3>
-                    <p className="text-slate-600 text-lg mb-8 line-clamp-3 flex-1 leading-relaxed font-medium">{course.description}</p>
-                    <div className="mt-auto flex justify-between items-center">
-                       <span className="text-sm text-slate-500 font-bold bg-orange-50 px-4 py-2 rounded-full flex items-center gap-2"><CalendarCheck size={16} className="text-orange-400"/> {course.duration}</span>
-                       <Button variant={isUnlocked ? 'secondary' : 'primary'} className={`h-12 px-6 text-base ${isUnlocked ? 'border-2 border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:border-green-300' : ''}`}>
-                         {isUnlocked ? <span className="flex items-center gap-2">Acceder <ArrowRight size={18}/></span> : (price === 0 ? 'GRATIS' : `$${price.toFixed(2)}`)}
-                       </Button>
+
+                  <div className="p-8 flex-1 flex flex-col pointer-events-none">
+                    <h3 className={`text-2xl font-black ${COLORS.textLight} mb-3 leading-tight line-clamp-2`}>{course.title}</h3>
+                    <p className={`${COLORS.textMuted} text-sm mb-6 line-clamp-3 font-medium`}>{course.description}</p>
+                    
+                    <div className="mt-auto flex justify-between items-center pt-4 border-t border-[#627D98] pointer-events-auto">
+                       <span className={`text-xs font-bold ${COLORS.textMuted} flex items-center gap-2`}><CalendarCheck size={16} className={COLORS.textOrange}/> {course.duration}</span>
+                       <button 
+                         onClick={(e) => { e.stopPropagation(); handleCardClick(course); }} 
+                         className={`${isUnlocked ? 'bg-[#48BB78]/20 text-[#48BB78]' : `${COLORS.accentOrange} text-white`} px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:scale-105 transition-transform cursor-pointer`}
+                       >
+                         {isUnlocked ? 'Acceder' : (price === 0 ? 'GRATIS' : `$${price.toFixed(2)}`)}
+                       </button>
                     </div>
                   </div>
                 </div>
                );
-            }) : (
-              <div className="col-span-full text-center py-20 animate-fade-in-up">
-                <p className="text-slate-500 text-xl font-bold">No encontramos cursos que coincidan con tu búsqueda 🔍</p>
-                <button onClick={() => setSearchTerm("")} className="mt-4 text-orange-500 font-bold underline hover:text-orange-600">Ver todos los cursos</button>
-              </div>
-            )}
+            })}
           </div>
         )}
       </div>
@@ -173,62 +398,69 @@ const CourseDetailView = ({ selectedCourse, isRich, setView, user, handleLogin, 
   const [expandedWeek, setExpandedWeek] = useState(null);
 
   return (
-    <div className="min-h-screen bg-orange-50/50 pb-20 font-sans text-slate-800 animate-fade-in-up">
+    <div className={`min-h-screen pb-20 font-sans ${COLORS.textLight} animate-fade-in-up overflow-x-hidden relative z-10`}>
       <Navbar user={user} userData={userData} setView={setView} handleLogin={handleLogin} handleLogout={handleLogout} resetDatabase={resetDatabase} />
-      <div className="relative pt-24 pb-32 px-6 overflow-hidden">
-         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-orange-200 via-orange-50/50 to-teal-50/50 opacity-70"></div>
-         <div className="absolute top-20 right-20 w-64 h-64 bg-teal-200/30 rounded-full blur-3xl mix-blend-multiply animate-pulse-soft"></div>
-         <div className="absolute bottom-0 left-20 w-80 h-80 bg-pink-200/30 rounded-full blur-3xl mix-blend-multiply animate-pulse-soft" style={{animationDelay: '1s'}}></div>
-         
-        <div className="max-w-5xl mx-auto text-center relative z-10">
-          <button onClick={() => setView('home')} className="group flex items-center text-slate-500 hover:text-orange-500 mb-8 mx-auto transition-all font-bold bg-white/50 px-4 py-2 rounded-full hover:bg-white"><ChevronRight size={20} className="mr-1 rotate-180 group-hover:-translate-x-1 transition-transform" /> Volver al inicio</button>
+      
+      <div className={`relative pt-20 pb-36 px-6 border-b border-[#486581] z-10 bg-[#334E68]/80 backdrop-blur-sm`}>
+        <div className="max-w-5xl mx-auto text-center relative z-10 animate-fade-in-up">
+          <button onClick={() => setView('home')} className={`group flex items-center ${COLORS.textMuted} hover:text-white font-bold ${COLORS.bgCard} px-5 py-2.5 rounded-full mb-8 mx-auto transition-all border border-[#627D98] hover:border-[#F9703E] hover:-translate-x-1`}><ChevronRight size={18} className="mr-2 rotate-180" /> Volver</button>
+          
           <div className="flex flex-wrap gap-3 mb-6 justify-center">
-            <Badge color="teal">{selectedCourse.category}</Badge>
-            {isRich && <Badge color="peach"><Sparkles size={12} className="mr-1 inline-block"/> CURSO PREMIUM</Badge>}
+            <Badge color="light">{selectedCourse.category}</Badge>
+            {isRich && <Badge color="orange"><Sparkles size={12} className="mr-1 inline-block animate-spin-slow"/> PREMIUM</Badge>}
           </div>
-          <h1 className="text-5xl md:text-6xl font-black mb-8 tracking-tight text-slate-900 leading-tight">{selectedCourse.title}</h1>
-          <p className="text-slate-600 text-xl max-w-3xl mx-auto leading-relaxed font-medium">
+          
+          <h1 className={`text-4xl md:text-6xl font-black mb-6 tracking-tight ${COLORS.textLight} leading-tight drop-shadow-xl`}>{selectedCourse.title}</h1>
+          <p className={`${COLORS.textMuted} text-lg max-w-3xl mx-auto font-medium opacity-90 leading-relaxed`}>
             {selectedCourse.longDescription || selectedCourse.description}
           </p>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-20">
-        <div className="bg-white rounded-[3rem] shadow-2xl shadow-orange-100/50 border border-white/50 backdrop-blur-sm overflow-hidden min-h-[600px] p-2">
-          <div className="flex flex-wrap justify-center gap-2 p-4 bg-orange-50/50 rounded-[2.5rem] mb-4">
+      <div className="max-w-5xl mx-auto px-6 -mt-24 relative z-20 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+        <div className={`${COLORS.bgCard} rounded-[3rem] border border-[#627D98] shadow-2xl overflow-hidden min-h-[600px] p-2 bg-opacity-95 backdrop-blur-xl`}>
+          
+          <div className={`flex flex-wrap justify-center gap-2 p-3 ${COLORS.bgMain} rounded-[2.5rem] mb-6 mx-2 mt-2 border border-[#486581]`}>
             {isRich ? (
               <>
                 {['plan', 'syllabus', 'tools'].map((tab) => (
-                  <button key={tab} onClick={() => setActiveTab(tab)} className={`py-3 px-6 rounded-full text-sm font-bold flex gap-2 items-center transition-all duration-300 ${activeTab === tab ? 'bg-white text-orange-500 shadow-md shadow-orange-100 scale-105' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`}>
+                  <button key={tab} onClick={() => setActiveTab(tab)} className={`py-3 px-8 rounded-full text-sm font-bold flex gap-2 items-center transition-all duration-300 ${activeTab === tab ? `${COLORS.accentOrange} text-white shadow-md scale-105` : `${COLORS.textMuted} hover:text-white hover:bg-[#486581]`}`}>
                     {tab === 'plan' && <CalendarCheck size={18}/>}
                     {tab === 'syllabus' && <BookOpen size={18}/>}
                     {tab === 'tools' && <PenTool size={18}/>}
-                    {tab === 'plan' ? 'Plan de Acción' : tab === 'syllabus' ? 'Temario' : 'Herramientas'}
+                    {tab === 'plan' ? 'Plan' : tab === 'syllabus' ? 'Temario' : 'Herramientas'}
                   </button>
                 ))}
               </>
             ) : (
-              <button className="py-3 px-8 rounded-full font-bold bg-white text-orange-500 shadow-md">Video Clase</button>
+              <button className={`py-3 px-8 rounded-full font-bold ${COLORS.accentOrange} text-white shadow-md`}>Video Clase</button>
             )}
           </div>
 
-          <div className="p-6 md:p-10 h-full">
+          <div className="p-8 md:p-12 h-full">
             {activeTab === 'plan' && isRich && (
-              <div className="space-y-6 max-w-3xl mx-auto animate-fade-in-up">
-                {selectedCourse.actionPlan.map((week) => (
-                  <div key={week.week} className="group bg-white border-2 border-orange-50 rounded-[2rem] overflow-hidden hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100/50 transition-all duration-300">
-                    <div onClick={() => setExpandedWeek(expandedWeek === week.week ? null : week.week)} className="p-6 flex items-center justify-between cursor-pointer">
+              <div className="space-y-5 max-w-3xl mx-auto">
+                {selectedCourse.actionPlan.map((week, index) => (
+                  <div 
+                    key={week.week} 
+                    className={`group ${COLORS.bgMain} border ${expandedWeek === week.week ? 'border-[#F9703E] shadow-md' : 'border-[#486581]'} rounded-2xl overflow-hidden transition-all duration-300 animate-fade-in-up`}
+                    style={{animationDelay: `${index * 0.1}s`}}
+                  >
+                    <div onClick={() => setExpandedWeek(expandedWeek === week.week ? null : week.week)} className={`p-6 flex items-center justify-between cursor-pointer hover:bg-[#486581]/50 transition-colors`}>
                       <div className="flex items-center gap-6">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl shadow-sm transition-all duration-300 ${expandedWeek === week.week ? 'bg-gradient-to-tr from-orange-400 to-pink-500 text-white scale-110 rotate-3' : 'bg-orange-100 text-orange-500 group-hover:bg-orange-200'}`}>{week.week}</div>
-                        <div><p className="text-xs text-orange-400 uppercase font-bold tracking-wider mb-1">Semana {week.week}</p><h4 className="font-bold text-slate-800 text-xl">{week.title}</h4></div>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl transition-all ${expandedWeek === week.week ? `${COLORS.accentOrange} text-white rotate-3 scale-110` : `${COLORS.bgCard} ${COLORS.textMuted} border border-[#627D98]`}`}>{week.week}</div>
+                        <div><p className={`text-[10px] ${COLORS.textOrange} uppercase font-bold tracking-widest mb-1`}>Semana {week.week}</p><h4 className={`font-bold ${COLORS.textLight} text-lg`}>{week.title}</h4></div>
                       </div>
-                      <div className={`p-2 rounded-full bg-orange-50 text-orange-400 transition-transform duration-300 ${expandedWeek === week.week ? 'rotate-180 bg-orange-100' : 'group-hover:bg-orange-100'}`}><ChevronDown size={24}/></div>
+                      <ChevronDown size={24} className={`${COLORS.textMuted} transition-transform duration-300 ${expandedWeek === week.week ? `rotate-180 ${COLORS.textOrange}` : ''}`}/>
                     </div>
                     {expandedWeek === week.week && (
-                      <div className="px-8 pb-8 pt-2 animate-fade-in-up">
-                        <ul className="space-y-4 relative pl-2 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-orange-100 before:rounded-full">
+                      <div className={`px-6 pb-8 pt-2 border-t border-[#486581] animate-fade-in-up`}>
+                        <ul className="space-y-4">
                           {week.tasks.map((task, i) => (
-                            <li key={i} className="flex items-start gap-4 text-slate-600 leading-relaxed font-medium bg-orange-50/50 p-4 rounded-2xl"><div className="bg-white p-1 rounded-full shadow-sm"><CheckCircle size={20} className="text-teal-500 flex-shrink-0" /></div><span>{task}</span></li>
+                            <li key={i} className={`flex items-start gap-4 ${COLORS.textLight} text-sm font-medium`}>
+                              <CheckCircle size={20} className={`${COLORS.textOrange} flex-shrink-0 mt-0.5`} />
+                              <span>{task}</span>
+                            </li>
                           ))}
                         </ul>
                       </div>
@@ -239,15 +471,16 @@ const CourseDetailView = ({ selectedCourse, isRich, setView, user, handleLogin, 
             )}
 
             {activeTab === 'syllabus' && isRich && (
-              <div className="space-y-8 max-w-3xl mx-auto animate-fade-in-up">
+              <div className="space-y-8 max-w-3xl mx-auto">
                 {selectedCourse.syllabus.map((mod, i) => (
-                  <div key={i} className="group bg-white p-8 rounded-[2.5rem] border-2 border-orange-50 shadow-sm hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100/50 transition-all duration-300">
-                    <h3 className="font-bold text-2xl text-slate-800 mb-8 flex items-center gap-4"><span className="bg-teal-100 text-teal-700 w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black">{i+1}</span>{mod.title}</h3>
-                    <div className="space-y-8 pl-6 border-l-4 border-teal-100 ml-6">
+                  <div key={i} className={`${COLORS.bgMain} p-8 rounded-[2rem] border border-[#486581] shadow-lg hover:border-[#627D98] transition-all animate-fade-in-up`} style={{animationDelay: `${i * 0.1}s`}}>
+                    <h3 className={`font-bold text-xl ${COLORS.textLight} mb-6 flex items-center gap-4`}><span className={`${COLORS.accentOrange} text-white w-10 h-10 rounded-xl flex items-center justify-center text-base font-black shadow-sm`}>{i+1}</span>{mod.title}</h3>
+                    <div className={`space-y-6 pl-5 border-l-2 border-[#627D98] ml-5`}>
                       {mod.content.map((item, j) => (
-                        <div key={j} className="relative pl-6 before:absolute before:left-[-0.65rem] before:top-2 before:w-4 before:h-4 before:bg-white before:border-4 before:border-teal-200 before:rounded-full">
-                          <h5 className="font-bold text-slate-800 text-xl mb-3">{item.subtitle}</h5>
-                          <p className="text-slate-600 leading-relaxed font-medium bg-teal-50/30 p-4 rounded-2xl">{item.text}</p>
+                        <div key={j} className="relative pl-6">
+                          <div className={`absolute left-[-0.4rem] top-1.5 w-3 h-3 rounded-full ${COLORS.accentOrange}`}></div>
+                          <h5 className={`font-bold ${COLORS.textLight} text-lg mb-2`}>{item.subtitle}</h5>
+                          <p className={`${COLORS.textMuted} leading-relaxed text-sm ${COLORS.bgCard} p-4 rounded-xl border border-[#486581]`}>{item.text}</p>
                         </div>
                       ))}
                     </div>
@@ -257,15 +490,15 @@ const CourseDetailView = ({ selectedCourse, isRich, setView, user, handleLogin, 
             )}
 
             {activeTab === 'tools' && isRich && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto animate-fade-in-up">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
                 {selectedCourse.tools.map((tool, i) => (
-                  <a key={i} href={tool.link} target="_blank" rel="noopener noreferrer" className="bg-white p-6 rounded-[2.5rem] border-2 border-orange-50 shadow-sm hover:border-orange-300 hover:shadow-2xl hover:shadow-orange-100/50 transition-all duration-300 group flex items-start gap-6 hover:-translate-y-2">
-                    <div className="bg-gradient-to-br from-orange-100 to-pink-100 p-5 rounded-2xl group-hover:scale-110 group-hover:rotate-3 transition-all shadow-sm">
-                       <PenTool size={32} className="text-orange-500"/>
+                  <a key={i} href={tool.link} target="_blank" rel="noopener noreferrer" className={`${COLORS.bgMain} p-6 rounded-2xl border border-[#486581] hover:border-[#F9703E] transition-all duration-300 group flex items-start gap-5 hover:-translate-y-2 shadow-md hover:shadow-2xl animate-fade-in-up`} style={{animationDelay: `${i * 0.1}s`}}>
+                    <div className={`${COLORS.bgCard} p-4 rounded-xl group-hover:${COLORS.accentOrange} transition-colors border border-[#627D98] duration-300`}>
+                       <PenTool size={24} className={`${COLORS.textMuted} group-hover:text-white transition-colors`}/>
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-800 text-xl flex items-center gap-2 mb-3 group-hover:text-orange-500 transition-colors">{tool.name} <ExternalLink size={16} className="opacity-50 group-hover:opacity-100 transition-opacity text-orange-400"/></h4>
-                      <p className="text-slate-600 leading-relaxed font-medium">{tool.desc}</p>
+                      <h4 className={`font-bold ${COLORS.textLight} text-lg flex items-center gap-2 mb-2 group-hover:${COLORS.textOrange} transition-colors`}>{tool.name} <ExternalLink size={16} className="opacity-50"/></h4>
+                      <p className={`${COLORS.textMuted} text-sm`}>{tool.desc}</p>
                     </div>
                   </a>
                 ))}
@@ -273,10 +506,10 @@ const CourseDetailView = ({ selectedCourse, isRich, setView, user, handleLogin, 
             )}
 
             {(!isRich || activeTab === 'video') && (
-               <div className="flex flex-col items-center justify-center text-center h-full py-20 animate-fade-in-up">
-                  <div className="bg-orange-100 p-10 rounded-full mb-8 shadow-lg shadow-orange-100 animate-pulse-soft"><Video size={80} className="text-orange-400"/></div>
-                  <h3 className="font-bold text-3xl text-slate-700 mb-4">Video Introductorio</h3>
-                  <p className="text-slate-500 max-w-md text-xl font-medium">Contenido próximamente.</p>
+               <div className="flex flex-col items-center justify-center text-center h-full py-24 animate-fade-in-up">
+                  <div className={`${COLORS.bgMain} p-10 rounded-full mb-8 text-[#627D98] border border-[#486581] animate-float`}><Video size={60}/></div>
+                  <h3 className={`font-bold text-2xl ${COLORS.textLight} mb-3`}>Video Introductorio</h3>
+                  <p className={COLORS.textMuted}>Contenido próximamente.</p>
                </div>
             )}
           </div>
@@ -295,14 +528,12 @@ export default function App() {
   const [notification, setNotification] = useState(null);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
 
-  // DATA Y BÚSQUEDA
   const [courses, setCourses] = useState([]);
   const [searchTerm, setSearchTerm] = useState(""); 
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [user, setUser] = useState(null); 
   const [userData, setUserData] = useState({ purchasedCourses: [], isSubscribed: false });
 
-  // 1. CARGAR CURSOS
   useEffect(() => {
     const fetchCourses = async () => {
       try {
@@ -317,7 +548,6 @@ export default function App() {
     fetchCourses();
   }, []);
 
-  // 2. AUTH USUARIO
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -334,7 +564,6 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // ADMIN: RESET TOTAL
   const resetDatabase = async () => {
     if (!confirm("⚠️ ¡PELIGRO! Esto borrará TODOS los cursos actuales y subirá limpios los 15 nuevos. ¿Continuar?")) return;
     try {
@@ -400,10 +629,12 @@ export default function App() {
     }, 2000);
   };
 
-  // --- RENDER PRINCIPAL ---
   return (
-    <div className="font-sans text-slate-800 bg-orange-50/30 min-h-screen selection:bg-orange-200 selection:text-orange-800">
-      {notification && <div className={`fixed top-8 left-1/2 transform -translate-x-1/2 z-[100] px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 animate-fade-in-up ${notification.type === 'error' ? 'bg-red-50 text-red-600 border-2 border-red-100' : 'bg-teal-50 text-teal-700 border-2 border-teal-100'} text-base font-bold backdrop-blur-md`}><CheckCircle size={24} /> {notification.msg}</div>}
+    <div className={`font-sans ${COLORS.textLight} ${COLORS.bgMain} min-h-screen selection:bg-[#F9703E] selection:text-white relative`}>
+      {/* FONDO NEURONAL ANIMADO */}
+      <NeuralBackground />
+
+      {notification && <div className={`fixed top-8 left-1/2 transform -translate-x-1/2 z-[100] px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 animate-pop-in ${COLORS.bgCard} border border-[#627D98] ${notification.type === 'error' ? 'text-red-400' : COLORS.textOrange} text-base font-bold`}><CheckCircle size={24} /> {notification.msg}</div>}
       
       {view === 'home' && (
         <HomeView 
@@ -435,21 +666,21 @@ export default function App() {
         />
       )}
 
-      {/* MODAL DE PAGO REUTILIZABLE */}
+      {/* MODAL DE PAGO */}
       {showPaymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in-up">
-          <div className="bg-white rounded-[3rem] shadow-2xl max-w-md w-full p-10 text-center relative overflow-hidden border-4 border-orange-100">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-400 to-pink-500"></div>
-            <h3 className="text-3xl font-black mb-4 text-slate-800 leading-tight">Desbloquea tu Potencial</h3>
-            <p className="text-slate-600 mb-8 font-medium">Acceso vitalicio a este curso.</p>
-            <div className="bg-orange-50 p-6 rounded-3xl mb-8 border border-orange-100">
-              <p className="text-sm text-orange-600 font-bold uppercase tracking-wider mb-2">Inversión Única</p>
-              <p className="text-5xl font-black text-slate-800">$2.00</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#102A43]/80 backdrop-blur-sm animate-fade-in-up">
+          <div className={`${COLORS.bgCard} rounded-[2rem] shadow-2xl max-w-md w-full p-8 text-center relative overflow-hidden border border-[#627D98] animate-pop-in`}>
+            <div className={`absolute top-0 left-0 w-full h-2 ${COLORS.accentOrange}`}></div>
+            <h3 className={`text-3xl font-black mb-4 ${COLORS.textLight} leading-tight`}>Desbloquea tu Potencial</h3>
+            <p className={`${COLORS.textMuted} mb-8 font-medium text-sm`}>Acceso vitalicio a este curso.</p>
+            <div className={`${COLORS.bgMain} p-6 rounded-2xl mb-8 border border-[#486581]`}>
+              <p className={`text-[10px] ${COLORS.textOrange} font-bold uppercase tracking-widest mb-2`}>Inversión Única</p>
+              <p className={`text-5xl font-black ${COLORS.textLight}`}>$2.00</p>
             </div>
-            <Button onClick={() => handlePayment(paymentType)} variant="primary" className="w-full h-16 text-xl shadow-xl shadow-orange-500/20">
+            <Button onClick={() => handlePayment(paymentType)} variant="primary" className="w-full h-16 text-xl shadow-lg hover:scale-105 transition-transform">
               {isLoadingPayment ? <Loader className="animate-spin"/> : "Confirmar y Empezar"}
             </Button>
-            <button onClick={() => setShowPaymentModal(false)} className="w-full mt-6 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-wider">Cancelar</button>
+            <button onClick={() => setShowPaymentModal(false)} className={`w-full mt-6 text-sm font-bold ${COLORS.textMuted} hover:text-white transition-colors uppercase tracking-wider`}>Cancelar</button>
           </div>
         </div>
       )}
