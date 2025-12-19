@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { 
   Play, Lock, CheckCircle, Star, Menu, X, User, 
   TrendingUp, Award, ChevronRight, Loader, LogOut, Video,
@@ -60,21 +60,37 @@ const formatCurrency = (amountInUSD) => {
   return `$${amountInUSD.toFixed(2)}`;
 };
 
-// --- FONDO NEURONAL --- 
-const NeuralBackground = () => {
+// --- FONDO NEURONAL (CORREGIDO: FONDO TRANSPARENTE) --- 
+const NeuralBackground = memo(() => {
   const canvasRef = useRef(null);
+  
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    // CORRECCIÓN AQUÍ: Quitamos { alpha: false } para que el fondo vuelva a ser transparente
+    const ctx = canvas.getContext('2d'); 
     let animationFrameId;
     let particles = [];
-    const particleCount = 70; const connectionDistance = 160; const moveSpeed = 0.4; 
-    const resizeCanvas = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+    
+    // Detección de móvil para rendimiento
+    const isMobile = window.innerWidth < 768;
+    const particleCount = isMobile ? 25 : 60; 
+    const connectionDistance = isMobile ? 100 : 160; 
+    const moveSpeed = 0.4; 
+
+    const resizeCanvas = () => { 
+        canvas.width = window.innerWidth; 
+        canvas.height = window.innerHeight; 
+        initParticles(); 
+    };
+    
+    window.addEventListener('resize', resizeCanvas); 
+    
     class Particle {
       constructor() {
-        this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
-        this.vx = (Math.random() - 0.5) * moveSpeed; this.vy = (Math.random() - 0.5) * moveSpeed;
+        this.x = Math.random() * canvas.width; 
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * moveSpeed; 
+        this.vy = (Math.random() - 0.5) * moveSpeed;
         this.size = Math.random() * 2 + 1;
       }
       update() {
@@ -82,26 +98,60 @@ const NeuralBackground = () => {
         if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
         if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
       }
-      draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fill(); }
+      draw() { 
+        ctx.beginPath(); 
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); 
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; 
+        ctx.fill(); 
+      }
     }
-    for (let i = 0; i < particleCount; i++) { particles.push(new Particle()); }
+
+    const initParticles = () => {
+        particles = [];
+        for (let i = 0; i < particleCount; i++) { 
+            particles.push(new Particle()); 
+        }
+    };
+
+    resizeCanvas(); 
+    
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
       particles.forEach((particle, index) => {
-        particle.update(); particle.draw();
+        particle.update(); 
+        particle.draw();
+        
         for (let j = index; j < particles.length; j++) {
-          const dx = particles[j].x - particle.x; const dy = particles[j].y - particle.y;
+          const dx = particles[j].x - particle.x; 
+          const dy = particles[j].y - particle.y;
+          
+          if (dx > connectionDistance || dx < -connectionDistance || dy > connectionDistance || dy < -connectionDistance) continue;
+
           const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < connectionDistance) { ctx.beginPath(); ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 * (1 - distance / connectionDistance)})`; ctx.lineWidth = 0.8; ctx.moveTo(particle.x, particle.y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke(); }
+          if (distance < connectionDistance) { 
+            ctx.beginPath(); 
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 * (1 - distance / connectionDistance)})`; 
+            ctx.lineWidth = 0.8; 
+            ctx.moveTo(particle.x, particle.y); 
+            ctx.lineTo(particles[j].x, particles[j].y); 
+            ctx.stroke(); 
+          }
         }
       });
       animationFrameId = requestAnimationFrame(animate);
     };
+    
     animate();
-    return () => { window.removeEventListener('resize', resizeCanvas); cancelAnimationFrame(animationFrameId); };
+    
+    return () => { 
+        window.removeEventListener('resize', resizeCanvas); 
+        cancelAnimationFrame(animationFrameId); 
+    };
   }, []);
+  
   return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none" style={{ background: 'transparent' }} />;
-};
+}, () => true);
 
 const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false }) => {
   const baseStyle = "px-8 py-3 rounded-full font-bold transition-all duration-300 ease-out flex items-center justify-center gap-2 text-sm tracking-wide active:scale-95 shadow-lg hover:shadow-xl transform relative z-10 select-none";
@@ -121,9 +171,9 @@ const Badge = ({ children, color = 'orange', className = '' }) => {
   return <span className={`px-4 py-1.5 rounded-full text-xs font-black tracking-wider uppercase ${finalStyle} ${className} transition-transform hover:scale-105 cursor-default select-none`}>{children}</span>;
 };
 
-// --- NAVBAR CON PROTECCIÓN --- 
+// --- NAVBAR --- 
 const Navbar = ({ user, userData, setView, handleLogin, handleLogout }) => (
-  <nav className={`sticky top-0 z-50 bg-[#334E68]/80 border-b border-[#486581] py-3 shadow-2xl animate-slide-down backdrop-blur-md bg-opacity-95 select-none`}>
+  <nav className={`sticky top-0 z-50 bg-[#334E68]/80 border-b border-[#486581] py-3 shadow-2xl animate-slide-down backdrop-blur-md bg-opacity-95 select-none will-change-transform`}>
     <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
       <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setView('home')}>
         <img src="/logo.png" alt="Logo" className="w-11 h-11 object-contain group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 drop-shadow-md" />
@@ -193,6 +243,7 @@ const HomeView = ({
   const animate = () => {
     if (!containerRef.current) return;
     const s = state.current;
+    
     if (!s.isDragging) { s.position += s.velocity; s.velocity *= 0.95; if (Math.abs(s.velocity) < 0.1) s.velocity = 0; }
     
     const centerOffset = window.innerWidth / 2;
@@ -210,15 +261,26 @@ const HomeView = ({
         const distToCenter = (cardX + CARD_WIDTH/2) - centerOffset;
         const absDist = Math.abs(distToCenter);
         const maxDist = 600; 
+        
         let scale = 1, rotateY = 0, opacity = 1, blur = 0, zIndex = 10;
+        
         if (absDist < maxDist) {
           const ratio = absDist / maxDist;
-          scale = 1 - (ratio * 0.25); rotateY = distToCenter / 20; opacity = 1 - (ratio * 0.5); blur = ratio * 4; zIndex = 100 - Math.round(ratio * 50);
+          scale = 1 - (ratio * 0.25); 
+          rotateY = distToCenter / 20; 
+          opacity = 1 - (ratio * 0.5); 
+          blur = ratio * 4; 
+          zIndex = 100 - Math.round(ratio * 50);
         } else {
           scale = 0.75; opacity = 0.5; blur = 4; zIndex = 1;
         }
+        
+        // OPTIMIZACIÓN: will-change ya está en el CSS inline
         card.style.transform = `translate3d(${cardX}px, 0, 0) perspective(1000px) rotateY(${rotateY}deg) scale(${scale})`;
-        card.style.opacity = opacity; card.style.filter = `blur(${blur}px)`; card.style.zIndex = zIndex; card.style.borderColor = absDist < 150 ? '#F9703E' : '#627D98';
+        card.style.opacity = opacity; 
+        card.style.filter = `blur(${blur}px)`; 
+        card.style.zIndex = zIndex; 
+        card.style.borderColor = absDist < 150 ? '#F9703E' : '#627D98';
       });
     }
     requestRef.current = requestAnimationFrame(animate);
@@ -245,7 +307,7 @@ const HomeView = ({
             </span>
             <span className="block mt-2 relative animate-fade-in-up opacity-0 group" style={{animationDelay: '0.5s', animationFillMode: 'forwards'}}>
               <span className={`bg-gradient-to-r from-[#F9703E] to-[#FF5722] bg-clip-text text-transparent inline-block transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-2 cursor-default`}>
-                 Monetiza desde hoy.
+                  Monetiza desde hoy.
               </span>
               <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-[110%] h-8 bg-[#F9703E]/40 blur-[20px] animate-pulse-slow rounded-full opacity-80 -z-10 group-hover:bg-[#F9703E]/70 group-hover:blur-[30px] transition-all duration-500"></span>
             </span>
@@ -282,9 +344,9 @@ const HomeView = ({
             {filteredCourses.map((course, index) => {
                const isUnlocked = course.isFree || userData?.isSubscribed || userData?.purchasedCourses?.includes(course.id);
                return (
-                <div key={course.id} ref={el => cardsRef.current[index] = el} className={`absolute top-10 left-0 w-[300px] md:w-[340px] h-[500px] rounded-[2.5rem] bg-[#486581] border-2 border-[#627D98] shadow-2xl overflow-hidden flex flex-col hover:border-[#F9703E] will-change-transform`} style={{ transform: 'translate3d(-1000px, 0, 0)' }}>
+                <div key={course.id} ref={el => cardsRef.current[index] = el} className={`absolute top-10 left-0 w-[300px] md:w-[340px] h-[500px] rounded-[2.5rem] bg-[#486581] border-2 border-[#627D98] shadow-2xl overflow-hidden flex flex-col hover:border-[#F9703E] will-change-transform`} style={{ transform: 'translate3d(-1000px, 0, 0)', willChange: 'transform' }}>
                   <div className="relative h-64 overflow-hidden pointer-events-none">
-                    <img src={course.image} alt={course.title} className="w-full h-full object-cover select-none" draggable="false" />
+                    <img src={course.image} alt={course.title} loading="lazy" decoding="async" className="w-full h-full object-cover select-none" draggable="false" />
                     <div className="absolute top-5 left-5"><Badge color="light">{course.category}</Badge></div>
                     {!isUnlocked && <div className="absolute inset-0 flex items-center justify-center bg-[#334E68]/70 backdrop-blur-[2px]"><div className={`${COLORS.bgLighter} p-4 rounded-full shadow-xl border border-[#F0F4F8]/20`}><Lock className="text-[#F0F4F8]" size={28} /></div></div>}
                   </div>
@@ -292,17 +354,17 @@ const HomeView = ({
                     <h3 className={`text-2xl font-black ${COLORS.textLight} mb-3 leading-tight line-clamp-2`}>{course.title}</h3>
                     <p className={`${COLORS.textMuted} text-sm mb-6 line-clamp-3 font-medium`}>{course.description}</p>
                     <div className="mt-auto flex justify-between items-center pt-4 border-t border-[#627D98] pointer-events-auto">
-                       <span className={`text-xs font-bold ${COLORS.textMuted} flex items-center gap-2`}><CalendarCheck size={16} className={COLORS.textOrange}/> {course.duration}</span>
-                       <div className="flex flex-col items-end gap-0.5">
-                         {!isUnlocked && (
-                           <span className="text-[10px] text-[#BCCCDC] font-bold line-through decoration-[#F9703E]/70 decoration-2">
-                             {formatCurrency(ORIGINAL_PRICE)}
-                           </span>
-                         )}
-                         <button onClick={(e) => { e.stopPropagation(); handleCardClick(course); }} className={`${isUnlocked ? 'bg-[#48BB78]/20 text-[#48BB78]' : `${COLORS.accentOrange} text-white`} px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:scale-105 transition-transform cursor-pointer`}>
-                           {isUnlocked ? 'Acceder' : formatCurrency(COURSE_PRICE)}
-                         </button>
-                       </div>
+                        <span className={`text-xs font-bold ${COLORS.textMuted} flex items-center gap-2`}><CalendarCheck size={16} className={COLORS.textOrange}/> {course.duration}</span>
+                        <div className="flex flex-col items-end gap-0.5">
+                          {!isUnlocked && (
+                            <span className="text-[10px] text-[#BCCCDC] font-bold line-through decoration-[#F9703E]/70 decoration-2">
+                              {formatCurrency(ORIGINAL_PRICE)}
+                            </span>
+                          )}
+                          <button onClick={(e) => { e.stopPropagation(); handleCardClick(course); }} className={`${isUnlocked ? 'bg-[#48BB78]/20 text-[#48BB78]' : `${COLORS.accentOrange} text-white`} px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:scale-105 transition-transform cursor-pointer`}>
+                            {isUnlocked ? 'Acceder' : formatCurrency(COURSE_PRICE)}
+                          </button>
+                        </div>
                     </div>
                   </div>
                 </div>
@@ -475,7 +537,7 @@ export default function App() {
   };
 
   // ===============================================
-  // 🟢 EFECTO NUEVO: DETECTOR DE PAGOS DE MERCADO PAGO
+  // 🟢 EFECTO: DETECTOR DE RETORNO DE PAGO MERCADO PAGO
   // ===============================================
   useEffect(() => {
     // 1. Leemos la URL actual
@@ -601,8 +663,13 @@ export default function App() {
       const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // AQUÍ USAMOS LA CONSTANTE GLOBAL COURSE_PRICE
-        body: JSON.stringify({ id, title, price: COURSE_PRICE }), 
+        // IMPORTANTE: Enviamos userId para que el backend pueda inyectarlo en la URL de retorno
+        body: JSON.stringify({ 
+          id, 
+          title, 
+          price: COURSE_PRICE,
+          userId: user.uid 
+        }), 
       });
 
       if (!response.ok) { const errorText = await response.text(); throw new Error(`Backend Error: ${errorText}`); }
@@ -650,6 +717,7 @@ export default function App() {
       
       <div className={`font-sans ${COLORS.textLight} ${COLORS.bgMain} min-h-screen selection:bg-[#F9703E] selection:text-white relative animate-fade-in`}>
         
+        {/* FONDO NEURONAL OPTIMIZADO (FONDO AZUL RESTAURADO) */}
         <NeuralBackground />
 
         {notification && <div className={`fixed top-8 left-1/2 transform -translate-x-1/2 z-[100] px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 animate-pop-in ${COLORS.bgCard} border border-[#627D98] ${notification.type === 'error' ? 'text-red-400' : COLORS.textOrange} text-base font-bold`}><CheckCircle size={24} /> {notification.msg}</div>}
