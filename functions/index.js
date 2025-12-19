@@ -1,52 +1,71 @@
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-const cors = require("cors")({ origin: true }); // Permite que tu web se conecte
-const { MercadoPagoConfig, Preference } = require("mercadopago");
+const { onRequest } = require("firebase-functions/v2/https");
+const logger = require("firebase-functions/logger");
+const { MercadoPagoConfig, Preference } = require('mercadopago');
 
-admin.initializeApp();
-
-// Configuración de Mercado Pago con tu ACCESS TOKEN
-const client = new MercadoPagoConfig({ 
-  accessToken: "APP_USR-7059676066598760-103011-a9baf76ca7324a612654055a3219912c-2956386505" 
+// ==========================================
+// 1. CONFIGURACIÓN DE MERCADO PAGO (PRODUCCIÓN)
+// ==========================================
+const mpClient = new MercadoPagoConfig({ 
+    accessToken: 'APP_USR-4746731218403713-092514-08fc48a44097fcff0ff347c161166c48-2695806238' 
 });
 
-exports.createOrder = functions.https.onRequest((req, res) => {
-  cors(req, res, async () => {
-    // Solo aceptamos peticiones POST
-    if (req.method !== "POST") {
-      return res.status(405).send("Method Not Allowed");
-    }
+// ==========================================
+// 2. CONFIGURACIÓN DE PAYPAL (REFERENCIA)
+// ==========================================
+const PAYPAL_CLIENT_ID = "AeRiOKZeVpLALmFN9P1uv05j6ERrkj7LAcoMkTLax9H3RphI6x8Zbh9q_m3dM55TaJ1dd_G2kZihRhy6";
+const PAYPAL_SECRET_KEY = "EELH4YnS4IbPAOVRAc7KRRUkRrvmgXX21GP8OCCd7spvmu-vRolGW4jfseSCrDwhic1JD5syogLn2grd";
+
+// ==========================================
+// 3. FUNCIÓN PRINCIPAL (CREATE ORDER)
+// ==========================================
+exports.createOrder = onRequest({ cors: true }, async (req, res) => {
+    
+    logger.info("Solicitud de pago recibida", req.body);
 
     try {
-      const { title, price, id } = req.body;
+        const { title, price, id } = req.body;
 
-      const preference = new Preference(client);
-      const result = await preference.create({
-        body: {
-          items: [
-            {
-              id: id,
-              title: title,
-              unit_price: Number(price), // Aseguramos que sea número
-              quantity: 1,
-              currency_id: "PEN", // Soles
-            },
-          ],
-          // Redirección al terminar el pago
-          back_urls: {
-            success: "https://weberic-25da5.web.app/", 
-            failure: "https://weberic-25da5.web.app/",
-            pending: "https://weberic-25da5.web.app/",
-          },
-          auto_return: "approved",
-        },
-      });
+        if (!title || !price) {
+            res.status(400).json({ error: "Faltan datos obligatorios (title o price)" });
+            return;
+        }
 
-      // Devolvemos el ID de preferencia al Frontend para mostrar el botón
-      res.json({ id: result.id });
+        const unitPrice = Number(price);
+        const courseId = id || "general"; // Guardamos el ID para la URL
+
+        // URL base de tu web (asegúrate de que esta sea la correcta)
+        // Puedes cambiar esto manualmente si usas otro dominio en el futuro
+        const baseUrl = "https://haeric.com"; 
+
+        const preference = new Preference(mpClient);
+
+        const result = await preference.create({
+            body: {
+                items: [
+                    {
+                        id: courseId,
+                        title: title,
+                        quantity: 1,
+                        unit_price: unitPrice,
+                        currency_id: "USD" 
+                    }
+                ],
+                // ⚠️ AQUÍ ESTÁ EL CAMBIO CLAVE:
+                // Agregamos ?course_id=ID al final de la URL para saber qué desbloquear
+                back_urls: {
+                    success: `${baseUrl}/?status=approved&course_id=${courseId}`,
+                    failure: `${baseUrl}/?status=failure`,
+                    pending: `${baseUrl}/?status=pending`
+                },
+                auto_return: "approved",
+                statement_descriptor: "HAERIC ACTIVOS" 
+            }
+        });
+
+        res.status(200).json({ id: result.id });
+
     } catch (error) {
-      console.error("Error MP:", error);
-      res.status(500).json({ error: error.message });
+        logger.error("Error en el servidor:", error);
+        res.status(500).json({ error: "Error interno procesando el pago" });
     }
-  });
 });

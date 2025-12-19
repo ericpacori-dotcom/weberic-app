@@ -3,7 +3,7 @@ import {
   Play, Lock, CheckCircle, Star, Menu, X, User, 
   TrendingUp, Award, ChevronRight, Loader, LogOut, Video,
   CalendarCheck, PenTool, BookOpen, ExternalLink, ChevronDown, ChevronUp, Briefcase, ArrowRight, Sparkles, Search, Trash2, RefreshCw, ArrowLeft,
-  AlertTriangle, ShieldCheck, CreditCard, Crown, Globe 
+  AlertTriangle, ShieldCheck, CreditCard, Crown, Globe, RefreshCcw, Zap, Bot 
 } from 'lucide-react';
 
 // FIREBASE IMPORTS 
@@ -27,15 +27,19 @@ import NewsSection from './components/NewsSection';
 import Footer from './components/Footer';
 import LegalModal from './components/LegalModal';
 import SubscriptionBanner from './components/SubscriptionBanner';
+import SplashScreen from './components/SplashScreen'; 
+import AIToolsView from './components/AIToolsView'; 
 
-// --- CREDENCIALES ---
-// Mercado Pago
-const MP_PUBLIC_KEY = "APP_USR-1c154382-cb24-4b0b-b786-1b78366614e3";
+// ==========================================
+// ⚙️ CONFIGURACIÓN GLOBAL
+// ==========================================
+const COURSE_PRICE = 0.50; // PRECIO EN USD
+const ORIGINAL_PRICE = 15.00;
+
+// Credenciales
+const MP_PUBLIC_KEY = "APP_USR-ad8ad489-cfad-4b2f-8495-6577e3636075"; 
+const PAYPAL_CLIENT_ID = "AeRiOKZeVpLALmFN9P1uv05j6ERrkj7LAcoMkTLax9H3RphI6x8Zbh9q_m3dM55TaJ1dd_G2kZihRhy6"; 
 const BACKEND_URL = "https://us-central1-weberic-25da5.cloudfunctions.net/createOrder";
-
-// PayPal (Reemplaza "test" con tu Client ID real de developer.paypal.com cuando vayas a producción)
-// Tu ID de Cliente Real (Sandbox)
-const PAYPAL_CLIENT_ID = "AR4IUvbaBmepnmlkYn-kuXqbidfJmmWp_-yFjGuv9rqSPd1ZuGh0KwfcB1BReHu78NAxPYG2y2z316kb"; 
 
 initMercadoPago(MP_PUBLIC_KEY, { locale: 'es-PE' });
 
@@ -49,6 +53,11 @@ const COLORS = {
   textLight: "text-[#F0F4F8]",  
   textMuted: "text-[#BCCCDC]",  
   borderSoft: "border-[#486581]", 
+};
+
+// --- FUNCIÓN HELPER ---
+const formatCurrency = (amountInUSD) => {
+  return `$${amountInUSD.toFixed(2)}`;
 };
 
 // --- FONDO NEURONAL --- 
@@ -112,7 +121,7 @@ const Badge = ({ children, color = 'orange', className = '' }) => {
   return <span className={`px-4 py-1.5 rounded-full text-xs font-black tracking-wider uppercase ${finalStyle} ${className} transition-transform hover:scale-105 cursor-default select-none`}>{children}</span>;
 };
 
-// --- NAVBAR --- 
+// --- NAVBAR CON PROTECCIÓN --- 
 const Navbar = ({ user, userData, setView, handleLogin, handleLogout }) => (
   <nav className={`sticky top-0 z-50 bg-[#334E68]/80 border-b border-[#486581] py-3 shadow-2xl animate-slide-down backdrop-blur-md bg-opacity-95 select-none`}>
     <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
@@ -126,7 +135,7 @@ const Navbar = ({ user, userData, setView, handleLogin, handleLogout }) => (
         {user ? (
           <div className={`flex items-center gap-4 ${COLORS.bgCard} p-2 pr-4 rounded-full border border-[#627D98] shadow-inner transition-all hover:border-[#F9703E]`}>
             <img src={user.photoURL} className={`w-9 h-9 rounded-full border-2 border-[#F9703E]`} alt="user" />
-            {userData.isSubscribed && <div className={`${COLORS.accentOrange} text-white px-3 py-0.5 rounded-full text-[10px] font-bold shadow-sm animate-pulse flex items-center gap-1`}><Crown size={10}/> PRO</div>}
+            {userData?.isSubscribed && <div className={`${COLORS.accentOrange} text-white px-3 py-0.5 rounded-full text-[10px] font-bold shadow-sm animate-pulse flex items-center gap-1`}><Crown size={10}/> PRO</div>}
             <button onClick={handleLogout} className={`${COLORS.textMuted} hover:text-[#EF4444] transition-colors p-2 hover:bg-[#334E68] rounded-full`}><LogOut size={18}/></button>
           </div>
         ) : (
@@ -137,12 +146,33 @@ const Navbar = ({ user, userData, setView, handleLogin, handleLogout }) => (
   </nav>
 );
 
+// --- SUBSCRIPTION VIEW ---
+const SubscriptionView = ({ onSubscribe, isSubscribed, setView, user, handleLogin, handleLogout, userData, goBack }) => {
+  return (
+    <div className={`min-h-screen pb-20 font-sans ${COLORS.textLight} animate-fade-in-up overflow-x-hidden relative z-10`}>
+      <Navbar user={user} userData={userData} setView={setView} handleLogin={handleLogin} handleLogout={handleLogout} />
+      
+      <div className={`relative pt-10 pb-6 px-6 border-b border-[#486581] z-10 bg-[#334E68]/95 backdrop-blur-sm shadow-sm`}>
+        <div className="max-w-4xl mx-auto text-center relative z-10 animate-fade-in-up">
+           <button onClick={goBack} className={`group inline-flex items-center ${COLORS.textMuted} hover:text-white font-bold ${COLORS.bgCard} px-3 py-1.5 rounded-full mb-2 mx-auto transition-all border border-[#627D98] hover:border-[#F9703E] hover:-translate-x-1 text-[10px] uppercase tracking-wider`}><ChevronRight size={12} className="mr-1 rotate-180" /> Volver</button>
+           <h1 className={`text-2xl md:text-3xl font-black mb-1 tracking-tight ${COLORS.textLight} leading-tight`}>Membresía <span className={COLORS.textOrange}>Premium</span></h1>
+           <p className={`${COLORS.textMuted} text-xs md:text-sm max-w-xl mx-auto font-medium opacity-80`}>Accede a todos los cursos y acelera tu crecimiento.</p>
+        </div>
+      </div>
+
+      <div className="pt-6">
+         <SubscriptionBanner onSubscribe={onSubscribe} isSubscribed={isSubscribed} />
+      </div>
+    </div>
+  );
+};
+
 // --- HOME VIEW --- 
 const HomeView = ({ 
   courses, loadingCourses, userData, user, handleCourseClick, 
   searchTerm, setSearchTerm, 
   setView, handleLogin, handleLogout, 
-  handleSubscribe 
+  onNavigate 
 }) => {
   const containerRef = useRef(null);
   const cardsRef = useRef([]); 
@@ -208,25 +238,49 @@ const HomeView = ({
       <div className={`relative py-12 px-6 text-center overflow-hidden z-10`}>
         <div className="max-w-5xl mx-auto relative animate-fade-in-up">
           <Badge color="orange" className="mb-6 shadow-lg inline-block"><Sparkles size={14} className="inline mr-1 animate-pulse"/> CATÁLOGO PREMIUM</Badge>
-          <h1 className={`text-5xl md:text-7xl font-black mb-6 tracking-tight leading-tight ${COLORS.textLight} drop-shadow-xl`}>Emprende con IA <br/><span className={`${COLORS.textOrange} inline-block`}>desde hoy.</span></h1>
+          
+          <h1 className={`text-3xl md:text-5xl font-black mb-8 tracking-tight leading-tight ${COLORS.textLight} drop-shadow-2xl flex flex-col items-center perspective-500`}>
+            <span className="block animate-pop-in opacity-0" style={{animationDelay: '0.2s', animationFillMode: 'forwards'}}>
+              Crea activos con IA,
+            </span>
+            <span className="block mt-2 relative animate-fade-in-up opacity-0 group" style={{animationDelay: '0.5s', animationFillMode: 'forwards'}}>
+              <span className={`bg-gradient-to-r from-[#F9703E] to-[#FF5722] bg-clip-text text-transparent inline-block transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-2 cursor-default`}>
+                 Monetiza desde hoy.
+              </span>
+              <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-[110%] h-8 bg-[#F9703E]/40 blur-[20px] animate-pulse-slow rounded-full opacity-80 -z-10 group-hover:bg-[#F9703E]/70 group-hover:blur-[30px] transition-all duration-500"></span>
+            </span>
+          </h1>
+          
+          {(!userData?.isSubscribed) && (
+            <div className="mt-8 animate-fade-in-up" style={{animationDelay: '0.8s', animationFillMode: 'forwards', opacity: 0}}>
+              <button 
+                onClick={() => onNavigate('subscription')}
+                className={`group relative inline-flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-[#F9703E] to-[#D64515] text-white font-black text-lg shadow-2xl hover:shadow-[#F9703E]/50 hover:-translate-y-1 transition-all duration-300 overflow-hidden`}
+              >
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                <Zap size={24} fill="currentColor" className="animate-pulse" />
+                <span className="relative z-10">Suscríbete y accede a TODO</span>
+                <ChevronRight size={20} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+              </button>
+              <p className={`mt-3 text-xs font-bold ${COLORS.textMuted} tracking-wide`}>Cancela cuando quieras • Acceso inmediato</p>
+            </div>
+          )}
+
         </div>
       </div>
-
-      <SubscriptionBanner onSubscribe={handleSubscribe} isSubscribed={userData.isSubscribed} />
       
-      <div className="relative z-30 px-6 mb-12">
+      <div className="relative z-30 px-6 mb-12 animate-fade-in-up" style={{animationDelay: '1s', animationFillMode: 'forwards', opacity: 0}}>
         <div className="max-w-xl mx-auto relative group">
           <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none"><Search className={`h-6 w-6 ${COLORS.textMuted} group-focus-within:text-[#F9703E] transition-colors`} /></div>
           <input type="text" placeholder="Buscar (ej: YouTube, Dinero, Web...)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full pl-14 pr-6 py-4 rounded-full border border-[#627D98] ${COLORS.bgCard} shadow-2xl text-lg font-bold ${COLORS.textLight} placeholder:${COLORS.textMuted} focus:outline-none focus:border-[#F9703E] focus:ring-1 focus:ring-[#F9703E] transition-all duration-300 focus:shadow-[#F9703E]/20 select-text`}/>
         </div>
       </div>
       
-      <div ref={containerRef} className="relative w-full h-[600px] z-10 cursor-grab active:cursor-grabbing touch-pan-y outline-none" onTouchStart={(e) => handleStart(e.touches[0].clientX)} onTouchMove={(e) => handleMove(e.touches[0].clientX)} onTouchEnd={handleEnd} onMouseDown={(e) => handleStart(e.clientX)} onMouseMove={(e) => { if(state.current.isDragging) { e.preventDefault(); handleMove(e.clientX); }}} onMouseUp={handleEnd} onMouseLeave={handleEnd}>
+      <div ref={containerRef} className="relative w-full h-[600px] z-10 cursor-grab active:cursor-grabbing touch-pan-y outline-none animate-fade-in-up" style={{animationDelay: '1.2s', animationFillMode: 'forwards', opacity: 0}} onTouchStart={(e) => handleStart(e.touches[0].clientX)} onTouchMove={(e) => handleMove(e.touches[0].clientX)} onTouchEnd={handleEnd} onMouseDown={(e) => handleStart(e.clientX)} onMouseMove={(e) => { if(state.current.isDragging) { e.preventDefault(); handleMove(e.clientX); }}} onMouseUp={handleEnd} onMouseLeave={handleEnd}>
         {loadingCourses ? <div className="flex justify-center h-full items-center"><Loader className={`animate-spin ${COLORS.textOrange}`} size={50}/></div> : filteredCourses.length === 0 ? <div className="text-center pt-20"><p className={`${COLORS.textMuted} text-xl font-bold`}>No encontramos cursos 🔍</p><button onClick={() => setSearchTerm("")} className={`mt-4 ${COLORS.textOrange} font-bold underline hover:text-white transition-colors`}>Ver todos</button></div> : (
           <div className="relative w-full h-full overflow-hidden">
             {filteredCourses.map((course, index) => {
-               const price = Number(course.price) || 0;
-               const isUnlocked = course.isFree || userData.isSubscribed || userData.purchasedCourses.includes(course.id);
+               const isUnlocked = course.isFree || userData?.isSubscribed || userData?.purchasedCourses?.includes(course.id);
                return (
                 <div key={course.id} ref={el => cardsRef.current[index] = el} className={`absolute top-10 left-0 w-[300px] md:w-[340px] h-[500px] rounded-[2.5rem] bg-[#486581] border-2 border-[#627D98] shadow-2xl overflow-hidden flex flex-col hover:border-[#F9703E] will-change-transform`} style={{ transform: 'translate3d(-1000px, 0, 0)' }}>
                   <div className="relative h-64 overflow-hidden pointer-events-none">
@@ -239,7 +293,16 @@ const HomeView = ({
                     <p className={`${COLORS.textMuted} text-sm mb-6 line-clamp-3 font-medium`}>{course.description}</p>
                     <div className="mt-auto flex justify-between items-center pt-4 border-t border-[#627D98] pointer-events-auto">
                        <span className={`text-xs font-bold ${COLORS.textMuted} flex items-center gap-2`}><CalendarCheck size={16} className={COLORS.textOrange}/> {course.duration}</span>
-                       <button onClick={(e) => { e.stopPropagation(); handleCardClick(course); }} className={`${isUnlocked ? 'bg-[#48BB78]/20 text-[#48BB78]' : `${COLORS.accentOrange} text-white`} px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:scale-105 transition-transform cursor-pointer`}>{isUnlocked ? 'Acceder' : (price === 0 ? 'GRATIS' : `$${price.toFixed(2)}`)}</button>
+                       <div className="flex flex-col items-end gap-0.5">
+                         {!isUnlocked && (
+                           <span className="text-[10px] text-[#BCCCDC] font-bold line-through decoration-[#F9703E]/70 decoration-2">
+                             {formatCurrency(ORIGINAL_PRICE)}
+                           </span>
+                         )}
+                         <button onClick={(e) => { e.stopPropagation(); handleCardClick(course); }} className={`${isUnlocked ? 'bg-[#48BB78]/20 text-[#48BB78]' : `${COLORS.accentOrange} text-white`} px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:scale-105 transition-transform cursor-pointer`}>
+                           {isUnlocked ? 'Acceder' : formatCurrency(COURSE_PRICE)}
+                         </button>
+                       </div>
                     </div>
                   </div>
                 </div>
@@ -254,10 +317,10 @@ const HomeView = ({
 };
 
 // --- COURSE DETAIL VIEW --- 
-const CourseDetailView = ({ selectedCourse, isRich, setView, user, handleLogin, handlePayment, handleLogout, userData, openRefundModal }) => {
+const CourseDetailView = ({ selectedCourse, isRich, setView, user, handleLogin, handlePayment, handleLogout, userData, openRefundModal, goBack }) => {
   const [activeTab, setActiveTab] = useState(isRich ? 'plan' : 'video');
   const [expandedWeek, setExpandedWeek] = useState(null);
-  const isOwned = userData.purchasedCourses.includes(selectedCourse?.id) || userData.isSubscribed;
+  const isOwned = userData?.purchasedCourses?.includes(selectedCourse?.id) || userData?.isSubscribed;
 
   return (
     <div className={`min-h-screen pb-20 font-sans ${COLORS.textLight} animate-fade-in-up overflow-x-hidden relative z-10`}>
@@ -265,7 +328,7 @@ const CourseDetailView = ({ selectedCourse, isRich, setView, user, handleLogin, 
       
       <div className={`relative pt-20 pb-36 px-6 border-b border-[#486581] z-10 bg-[#334E68]/80 backdrop-blur-sm`}>
         <div className="max-w-5xl mx-auto text-center relative z-10 animate-fade-in-up">
-          <button onClick={() => setView('home')} className={`group flex items-center ${COLORS.textMuted} hover:text-white font-bold ${COLORS.bgCard} px-5 py-2.5 rounded-full mb-8 mx-auto transition-all border border-[#627D98] hover:border-[#F9703E] hover:-translate-x-1`}><ChevronRight size={18} className="mr-2 rotate-180" /> Volver</button>
+          <button onClick={goBack} className={`group flex items-center ${COLORS.textMuted} hover:text-white font-bold ${COLORS.bgCard} px-5 py-2.5 rounded-full mb-8 mx-auto transition-all border border-[#627D98] hover:border-[#F9703E] hover:-translate-x-1`}><ChevronRight size={18} className="mr-2 rotate-180" /> Volver</button>
           
           <div className="flex flex-wrap gap-3 mb-6 justify-center">
             <Badge color="light">{selectedCourse.category}</Badge>
@@ -350,11 +413,14 @@ const CourseDetailView = ({ selectedCourse, isRich, setView, user, handleLogin, 
 
 // --- APP PRINCIPAL --- 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
+  const [finishSplashAnimation, setFinishSplashAnimation] = useState(false);
+  
   const [view, setView] = useState('home'); 
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isSubscriptionPayment, setIsSubscriptionPayment] = useState(false); 
-  const [paymentMethod, setPaymentMethod] = useState('mercadopago'); // 'mercadopago' | 'paypal' (NUEVO ESTADO)
+  const [paymentMethod, setPaymentMethod] = useState('mercadopago');
   
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundReason, setRefundReason] = useState("");
@@ -369,7 +435,89 @@ export default function App() {
   const [user, setUser] = useState(null); 
   const [userData, setUserData] = useState({ purchasedCourses: [], isSubscribed: false });
 
-  // ... (Efectos de Caching y Auth igual que antes) ...
+  // --- EFECTO: SPLASH TIMER ---
+  useEffect(() => {
+    const timerExit = setTimeout(() => { setFinishSplashAnimation(true); }, 2500);
+    const timerRemove = setTimeout(() => { setShowSplash(false); }, 3000);
+    return () => { clearTimeout(timerExit); clearTimeout(timerRemove); };
+  }, []);
+
+  // --- MANEJO DEL HISTORIAL DEL NAVEGADOR ---
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (event.state) {
+        setView(event.state.view);
+        setSelectedCourse(event.state.course || null);
+      } else {
+        setView('home');
+        setSelectedCourse(null);
+      }
+    };
+    window.history.replaceState({ view: 'home', course: null }, '');
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // --- FUNCIÓN CENTRAL PARA NAVEGAR ---
+  const navigateTo = (newView, course = null) => {
+    window.history.pushState({ view: newView, course }, '');
+    setView(newView);
+    if (course) setSelectedCourse(course);
+    window.scrollTo(0, 0); 
+  };
+
+  const goBack = () => {
+    if (view !== 'home') {
+      window.history.back(); 
+    } else {
+      navigateTo('home');
+    }
+  };
+
+  // ===============================================
+  // 🟢 EFECTO NUEVO: DETECTOR DE PAGOS DE MERCADO PAGO
+  // ===============================================
+  useEffect(() => {
+    // 1. Leemos la URL actual
+    const query = new URLSearchParams(window.location.search);
+    const status = query.get('status');
+    const courseId = query.get('course_id');
+
+    // 2. Si el pago fue aprobado y hay un usuario logueado...
+    if (status === 'approved' && user && courseId) {
+      
+      const unlockContent = async () => {
+        try {
+          const userRef = doc(db, "users", user.uid);
+          
+          if (courseId === 'SUB-PREMIUM-MONTHLY') {
+             // Es una suscripción
+             await updateDoc(userRef, { isSubscribed: true });
+             setUserData(prev => ({ ...prev, isSubscribed: true }));
+             showNotification("¡Suscripción Activada! 🚀", "success");
+          } else {
+             // Es un curso individual
+             await updateDoc(userRef, { purchasedCourses: arrayUnion(courseId) });
+             setUserData(prev => ({ 
+               ...prev, 
+               purchasedCourses: [...(prev.purchasedCourses || []), courseId] 
+             }));
+             showNotification("¡Curso Desbloqueado! 📚", "success");
+          }
+
+          // Limpiamos la URL para que no se ejecute de nuevo al refrescar
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+        } catch (error) {
+          console.error("Error guardando compra MP:", error);
+          showNotification("Error guardando el curso. Contáctanos.", "error");
+        }
+      };
+
+      unlockContent();
+    }
+  }, [user]); // Se ejecuta cuando el usuario carga o cambia
+
   useEffect(() => {
     const fetchCourses = async () => {
       try {
@@ -413,14 +561,17 @@ export default function App() {
   const showNotification = (msg, type = 'success') => { setNotification({ msg, type }); setTimeout(() => setNotification(null), 4000); };
 
   const handleCourseClick = (course) => {
-    const isUnlocked = course.isFree || userData.isSubscribed || userData.purchasedCourses.includes(course.id);
-    if (isUnlocked) { setSelectedCourse(course); setView('course-detail'); window.scrollTo(0, 0); } 
+    // 🛡️ PROTECCIÓN AQUÍ
+    const isUnlocked = course.isFree || userData?.isSubscribed || userData?.purchasedCourses?.includes(course.id);
+    if (isUnlocked) { 
+      navigateTo('course-detail', course); 
+    } 
     else {
       if (!user) { showNotification("Inicia sesión primero", "error"); handleLogin(); return; }
       setSelectedCourse(course);
       setIsSubscriptionPayment(false); 
       setPreferenceId(null);
-      setPaymentMethod('mercadopago'); // Resetear a MP por defecto
+      setPaymentMethod('mercadopago');
       setShowPaymentModal(true);
     }
   };
@@ -437,14 +588,21 @@ export default function App() {
   const createPreference = async () => {
     setIsLoadingPayment(true);
     try {
-      let title, price, id;
-      if (isSubscriptionPayment) { title = "Suscripción Premium Mensual"; price = 3.00; id = "SUB-PREMIUM-MONTHLY"; } 
-      else { title = selectedCourse.title; price = Number(selectedCourse.price); id = selectedCourse.id; if (isNaN(price) || price <= 0) price = 2.00; }
+      let title, id;
+
+      if (isSubscriptionPayment) { 
+        title = "Suscripción Premium Mensual"; 
+        id = "SUB-PREMIUM-MONTHLY"; 
+      } else { 
+        title = `Curso: ${selectedCourse.title}`; 
+        id = selectedCourse.id; 
+      }
       
       const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, title, price }),
+        // AQUÍ USAMOS LA CONSTANTE GLOBAL COURSE_PRICE
+        body: JSON.stringify({ id, title, price: COURSE_PRICE }), 
       });
 
       if (!response.ok) { const errorText = await response.text(); throw new Error(`Backend Error: ${errorText}`); }
@@ -456,7 +614,6 @@ export default function App() {
 
   // --- LÓGICA DE PAGO PAYPAL (SUCCESS) ---
   const handlePayPalApprove = async (data, actions) => {
-    // Aquí podrías validar el pago en tu backend, pero para MVP actualizamos directo
     try {
       const userRef = doc(db, "users", user.uid);
       if (isSubscriptionPayment) {
@@ -489,10 +646,12 @@ export default function App() {
   };
 
   return (
-    // WRAPPER DE PAYPAL PARA QUE FUNCIONE EN TODA LA APP
     <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "USD" }}>
-      <div className={`font-sans ${COLORS.textLight} ${COLORS.bgMain} min-h-screen selection:bg-[#F9703E] selection:text-white relative`}>
+      
+      <div className={`font-sans ${COLORS.textLight} ${COLORS.bgMain} min-h-screen selection:bg-[#F9703E] selection:text-white relative animate-fade-in`}>
+        
         <NeuralBackground />
+
         {notification && <div className={`fixed top-8 left-1/2 transform -translate-x-1/2 z-[100] px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 animate-pop-in ${COLORS.bgCard} border border-[#627D98] ${notification.type === 'error' ? 'text-red-400' : COLORS.textOrange} text-base font-bold`}><CheckCircle size={24} /> {notification.msg}</div>}
         
         {view === 'home' && (
@@ -500,99 +659,92 @@ export default function App() {
             courses={courses} loadingCourses={loadingCourses} userData={userData} user={user} 
             handleCourseClick={handleCourseClick} searchTerm={searchTerm} setSearchTerm={setSearchTerm} 
             setView={setView} handleLogin={handleLogin} handleLogout={handleLogout} resetDatabase={resetDatabase}
-            openLegalModal={setLegalModalType} handleSubscribe={handleSubscriptionClick} 
+            openLegalModal={setLegalModalType} handleSubscribe={handleSubscriptionClick}
+            onNavigate={navigateTo} 
           />
         )}
         
+        {view === 'tools' && (
+          <AIToolsView setView={setView} />
+        )}
+
+        {view === 'subscription' && (
+          <SubscriptionView 
+            onSubscribe={handleSubscriptionClick} 
+            isSubscribed={userData?.isSubscribed}
+            setView={setView} user={user} handleLogin={handleLogin} handleLogout={handleLogout}
+            userData={userData} goBack={goBack}
+          />
+        )}
+
         {view === 'course-detail' && (
           <CourseDetailView 
             selectedCourse={selectedCourse} isRich={selectedCourse?.isRichContent} setView={setView} user={user} 
             handleLogin={handleLogin} handlePayment={() => { setIsSubscriptionPayment(false); createPreference(); }} 
-            handleLogout={handleLogout} resetDatabase={resetDatabase} userData={userData} openRefundModal={() => setShowRefundModal(true)} 
+            handleLogout={handleLogout} resetDatabase={resetDatabase} userData={userData} openRefundModal={() => setShowRefundModal(true)}
+            goBack={goBack}
           />
         )}
 
-        {/* MODAL DE PAGO (MEJORADO CON TABS) */}
-        {showPaymentModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#102A43]/80 backdrop-blur-sm animate-fade-in-up">
-            <div className={`${COLORS.bgCard} rounded-[2rem] shadow-2xl max-w-md w-full p-8 text-center relative overflow-hidden border border-[#627D98] animate-pop-in`}>
-              <div className={`absolute top-0 left-0 w-full h-2 ${COLORS.accentOrange}`}></div>
-              
-              <h3 className={`text-3xl font-black mb-2 ${COLORS.textLight} leading-tight`}>
-                {isSubscriptionPayment ? "Pase Premium" : "Desbloquea tu Potencial"}
-              </h3>
-              <div className={`${COLORS.bgMain} p-4 rounded-2xl mb-6 border border-[#486581]`}>
-                <p className={`text-[10px] ${COLORS.textOrange} font-bold uppercase tracking-widest mb-1`}>Total a Pagar</p>
-                <p className={`text-4xl font-black ${COLORS.textLight}`}>
-                  ${isSubscriptionPayment ? "3.00" : (selectedCourse?.price || "2.00")}
-                </p>
-              </div>
-
-              {/* SELECTOR DE MÉTODO DE PAGO */}
-              <div className="flex gap-2 mb-6 bg-[#334E68] p-1 rounded-xl">
-                <button 
-                  onClick={() => setPaymentMethod('mercadopago')}
-                  className={`flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all ${paymentMethod === 'mercadopago' ? 'bg-[#486581] text-white shadow-sm' : 'text-[#BCCCDC] hover:text-white'}`}
-                >
-                  <CreditCard size={14} /> Tarjeta / Yape
-                </button>
-                <button 
-                  onClick={() => setPaymentMethod('paypal')}
-                  className={`flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all ${paymentMethod === 'paypal' ? 'bg-[#003087] text-white shadow-sm' : 'text-[#BCCCDC] hover:text-white'}`}
-                >
-                  <Globe size={14} /> PayPal
-                </button>
-              </div>
-
-              {/* CONTENIDO SEGÚN MÉTODO */}
-              {paymentMethod === 'mercadopago' ? (
-                // --- MERCADO PAGO ---
-                !preferenceId ? (
-                  <Button onClick={createPreference} variant="primary" className="w-full h-14 text-lg shadow-lg hover:scale-105 transition-transform">
-                    {isLoadingPayment ? <Loader className="animate-spin"/> : "Continuar con Mercado Pago"}
-                  </Button>
-                ) : (
-                  <div className="animate-fade-in-up">
-                      <Wallet initialization={{ preferenceId: preferenceId }} customization={{ texts:{ valueProp: 'smart_option'}}} />
-                  </div>
-                )
-              ) : (
-                // --- PAYPAL BUTTONS ---
-                <div className="animate-fade-in-up z-10 relative">
-                  <PayPalButtons 
-                    style={{ layout: "vertical", shape: "pill" }}
-                    createOrder={(data, actions) => {
-                      return actions.order.create({
-                        purchase_units: [{
-                          amount: { value: isSubscriptionPayment ? "3.00" : (selectedCourse?.price?.toString() || "2.00") },
-                          description: isSubscriptionPayment ? "Suscripción Premium" : selectedCourse.title
-                        }]
-                      });
-                    }}
-                    onApprove={handlePayPalApprove}
-                  />
-                </div>
-              )}
-
-              <button onClick={() => setShowPaymentModal(false)} className={`w-full mt-6 text-sm font-bold ${COLORS.textMuted} hover:text-white transition-colors uppercase tracking-wider`}>Cancelar</button>
-            </div>
-          </div>
+        {view !== 'tools' && (
+          <button
+            onClick={() => navigateTo('tools')} 
+            className={`fixed bottom-8 right-8 w-20 h-20 bg-[#F9703E] rounded-full shadow-2xl z-50 flex flex-col items-center justify-center border-4 border-[#334E68] hover:scale-110 transition-all group animate-bounce-slow`}
+          >
+            <Bot size={28} className="text-white mb-0.5 group-hover:rotate-12 transition-transform" />
+            <span className="text-[9px] font-black text-white leading-none">TOOLS IA</span>
+          </button>
         )}
 
-        {showRefundModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#102A43]/90 backdrop-blur-md animate-fade-in-up">
-            <div className={`${COLORS.bgCard} rounded-[2rem] shadow-2xl max-w-md w-full p-8 text-left relative border border-[#EF4444]/50 animate-pop-in`}>
-              <h3 className={`text-2xl font-black mb-2 ${COLORS.textLight} flex items-center gap-2`}><ShieldCheck className="text-[#EF4444]"/> Solicitar Reembolso</h3>
-              <p className={`${COLORS.textMuted} mb-6 text-sm`}>Cuéntanos qué pasó y revisaremos tu caso.</p>
-              <textarea value={refundReason} onChange={(e) => setRefundReason(e.target.value)} placeholder="Ej: El contenido no era lo que esperaba..." className={`w-full p-4 rounded-xl bg-[#334E68] border border-[#627D98] text-[#F0F4F8] mb-6 focus:border-[#F9703E] focus:outline-none min-h-[100px]`}/>
-              <div className="flex gap-4"><button onClick={() => setShowRefundModal(false)} className={`flex-1 py-3 rounded-full font-bold ${COLORS.bgMain} ${COLORS.textMuted} hover:text-white`}>Cancelar</button><Button onClick={handleRefundRequest} variant="danger" className="flex-1">{isLoadingPayment ? <Loader className="animate-spin"/> : "Enviar Solicitud"}</Button></div>
+        {showPaymentModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#102A43]/80 backdrop-blur-sm animate-fade-in-up">
+              <div className={`${COLORS.bgCard} rounded-[2rem] shadow-2xl max-w-md w-full p-8 text-center relative max-h-[90vh] overflow-y-auto border border-[#627D98] animate-pop-in`}>
+                <div className={`absolute top-0 left-0 w-full h-2 ${COLORS.accentOrange}`}></div>
+                <h3 className={`text-3xl font-black mb-2 ${COLORS.textLight} leading-tight`}>{isSubscriptionPayment ? "Pase Premium" : "Desbloquea tu Potencial"}</h3>
+                
+                <div className={`${COLORS.bgMain} p-4 rounded-2xl mb-6 border border-[#486581]`}>
+                  <p className={`text-[10px] ${COLORS.textOrange} font-bold uppercase tracking-widest mb-1`}>Total a Pagar</p>
+                  <p className={`text-4xl font-black ${COLORS.textLight}`}>
+                    {formatCurrency(COURSE_PRICE)}
+                  </p>
+                  <p className="text-[10px] text-[#BCCCDC] mt-1">Pagos procesados en Dólares (USD)</p>
+                </div>
+
+                <div className="flex gap-2 mb-6 bg-[#334E68] p-1 rounded-xl">
+                  <button onClick={() => setPaymentMethod('mercadopago')} className={`flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all ${paymentMethod === 'mercadopago' ? 'bg-[#486581] text-white shadow-sm' : 'text-[#BCCCDC] hover:text-white'}`}><CreditCard size={14} /> Tarjeta / Yape</button>
+                  <button onClick={() => setPaymentMethod('paypal')} className={`flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all ${paymentMethod === 'paypal' ? 'bg-[#003087] text-white shadow-sm' : 'text-[#BCCCDC] hover:text-white'}`}><Globe size={14} /> PayPal</button>
+                </div>
+                
+                {paymentMethod === 'mercadopago' ? (!preferenceId ? (<Button onClick={createPreference} variant="primary" className="w-full h-14 text-lg shadow-lg hover:scale-105 transition-transform">{isLoadingPayment ? <Loader className="animate-spin"/> : "Continuar con Mercado Pago"}</Button>) : (<div className="animate-fade-in-up"><Wallet initialization={{ preferenceId: preferenceId }} customization={{ texts:{ valueProp: 'smart_option'}}} /></div>)) : (
+                  <div className="animate-fade-in-up z-10 relative">
+                    <PayPalButtons 
+                      style={{ layout: "vertical", shape: "pill" }} 
+                      createOrder={(data, actions) => { 
+                        return actions.order.create({ 
+                          purchase_units: [{ 
+                            amount: { value: COURSE_PRICE.toString() }, 
+                            description: isSubscriptionPayment ? "Suscripción Premium" : selectedCourse.title 
+                          }] 
+                        }); 
+                      }} 
+                      onApprove={handlePayPalApprove} 
+                    />
+                  </div>
+                )}
+                
+                <button onClick={() => setShowPaymentModal(false)} className={`w-full mt-6 text-sm font-bold ${COLORS.textMuted} hover:text-white transition-colors uppercase tracking-wider`}>Cancelar</button>
+              </div>
             </div>
-          </div>
         )}
 
         <LegalModal type={legalModalType} onClose={() => setLegalModalType(null)} />
         {view === 'home' && <Footer onOpenLegal={setLegalModalType} />}
       </div>
+
+      {showSplash && (
+        <SplashScreen finishAnimation={finishSplashAnimation} />
+      )}
+
     </PayPalScriptProvider>
   );
 }
