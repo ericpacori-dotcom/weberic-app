@@ -1,66 +1,89 @@
+// src/components/LegalModal.jsx
 import React from 'react';
-import { X, ShieldCheck, FileText, Info, HelpCircle } from 'lucide-react'; // Importamos nuevos iconos
-import { LEGAL_DATA } from '../content/legal_data';
+import { X } from 'lucide-react';
+import { COLORS } from '../utils/constants';
 
-// --- PALETA HAERIC1 ---
-const COLORS = {
-  bgOverlay: "bg-[#102A43]/90",
-  bgCard: "bg-[#334E68]",
-  textLight: "text-[#F0F4F8]",
-  textMuted: "text-[#BCCCDC]",
-  accentOrange: "text-[#F9703E]",
-  border: "border-[#486581]"
-};
-
-const LegalModal = ({ type, onClose }) => {
+export default function LegalModal({ type, onClose }) {
   if (!type) return null;
 
-  const data = LEGAL_DATA[type]; 
-  
-  // Selección dinámica de icono según el tipo de contenido
-  let Icon = FileText;
-  if (type === 'privacy') Icon = ShieldCheck;
-  if (type === 'about') Icon = Info;
-  if (type === 'help') Icon = HelpCircle;
+  const content = {
+    terms: {
+      title: "Términos y Condiciones",
+      body: (
+        <>
+          <p className="mb-4">Bienvenido a Haeric Academy. Al utilizar nuestra plataforma, aceptas los siguientes términos:</p>
+          <ul className="list-disc pl-5 space-y-2 text-[#BCCCDC]">
+            <li><b>Uso del Servicio:</b> Nuestros cursos y herramientas son productos digitales. El acceso es personal e intransferible.</li>
+            <li><b>Propiedad Intelectual:</b> Todo el contenido es propiedad de Haeric Academy. Queda prohibida su redistribución.</li>
+            <li><b>Disponibilidad:</b> Nos esforzamos por mantener el servicio 99.9% activo, pero nos reservamos el derecho a mantenimiento.</li>
+            <li><b>Pagos:</b> Los cobros son procesados de forma segura por Mercado Pago y PayPal.</li>
+          </ul>
+        </>
+      )
+    },
+    privacy: {
+      title: "Política de Privacidad",
+      body: (
+        <>
+          <p className="mb-4">Tu privacidad es fundamental. Así es como manejamos tus datos:</p>
+          <ul className="list-disc pl-5 space-y-2 text-[#BCCCDC]">
+            <li><b>Datos Recopilados:</b> Solo almacenamos tu email para el inicio de sesión y tu estado de suscripción.</li>
+            <li><b>No compartimos datos:</b> Tu información nunca será vendida a terceros.</li>
+            <li><b>Cookies:</b> Utilizamos cookies esenciales para mantener tu sesión activa y segura.</li>
+            <li><b>Contacto:</b> Para ejercer tus derechos ARCO, contáctanos en <span className="text-white font-bold">haeric.com@gmail.com</span>.</li>
+          </ul>
+        </>
+      )
+    },
+    refunds: {
+      title: "Política de Reembolsos",
+      body: (
+        <>
+          <p className="mb-4">Queremos que estés 100% satisfecho. Esta es nuestra garantía:</p>
+          <ul className="list-disc pl-5 space-y-2 text-[#BCCCDC]">
+            <li><b>Plazo de Garantía:</b> Tienes <b className="text-white">7 días naturales</b> desde la fecha de compra para solicitar un reembolso completo si el contenido no cumple tus expectativas.</li>
+            <li><b>Proceso:</b> Para solicitarlo, envía un correo a <span className="text-white font-bold">haeric.com@gmail.com</span> con tu comprobante de pago.</li>
+            <li><b>Suscripciones:</b> Puedes cancelar tu suscripción recurrente en cualquier momento. El acceso se mantendrá hasta el final del ciclo facturado.</li>
+            <li><b>Excepciones:</b> No se aplican reembolsos si se detecta un uso abusivo o descargas masivas del contenido.</li>
+          </ul>
+        </>
+      )
+    }
+  };
+
+  const selectedContent = content[type] || content.terms;
 
   return (
-    <div className={`fixed inset-0 z-[60] flex items-center justify-center p-4 ${COLORS.bgOverlay} backdrop-blur-md animate-fade-in-up`}>
-      <div className={`${COLORS.bgCard} w-full max-w-2xl max-h-[80vh] rounded-[2rem] border ${COLORS.border} shadow-2xl flex flex-col animate-pop-in relative overflow-hidden`}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#102A43]/90 backdrop-blur-md animate-fade-in">
+      <div className={`${COLORS.bgCard} w-full max-w-2xl rounded-2xl shadow-2xl border border-[#486581] flex flex-col max-h-[80vh]`}>
         
-        {/* Cabecera */}
-        <div className={`p-6 border-b ${COLORS.border} flex justify-between items-center bg-[#243B53]`}>
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-full bg-[#102A43] ${COLORS.accentOrange}`}>
-              <Icon size={24} />
-            </div>
-            <h2 className={`text-2xl font-black ${COLORS.textLight}`}>{data?.title || "Información"}</h2>
-          </div>
-          <button onClick={onClose} className={`${COLORS.textMuted} hover:text-white hover:bg-[#102A43] p-2 rounded-full transition-all`}>
+        {/* Header */}
+        <div className="p-6 border-b border-[#334E68] flex justify-between items-center bg-[#102A43] rounded-t-2xl">
+          <h2 className="text-2xl font-bold text-white">{selectedContent.title}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-[#334E68] rounded-full transition-colors text-[#BCCCDC] hover:text-white">
             <X size={24} />
           </button>
         </div>
 
-        {/* Contenido Scrollable */}
-        <div className="p-8 overflow-y-auto custom-scrollbar">
-          <div 
-            className={`${COLORS.textMuted} leading-relaxed text-sm space-y-4`}
-            dangerouslySetInnerHTML={{ __html: data?.content || "<p>Contenido no disponible.</p>" }} 
-          />
+        {/* Body (Scrollable) */}
+        <div className="p-8 overflow-y-auto custom-scrollbar text-sm leading-relaxed text-[#9FB3C8]">
+          {selectedContent.body}
+          
+          <div className="mt-8 p-4 bg-[#102A43] rounded-lg border border-[#334E68]">
+            <p className="text-center font-bold text-[#F0F4F8]">
+              ¿Dudas? Contáctanos: <a href="mailto:haeric.com@gmail.com" className="text-[#F9703E] hover:underline">haeric.com@gmail.com</a>
+            </p>
+          </div>
         </div>
 
-        {/* Pie */}
-        <div className={`p-6 border-t ${COLORS.border} bg-[#243B53] flex justify-end`}>
-          <button 
-            onClick={onClose}
-            className={`px-8 py-2 rounded-full font-bold bg-[#F9703E] text-white hover:bg-[#DE5E2E] transition-colors`}
-          >
-            Cerrar
+        {/* Footer */}
+        <div className="p-4 border-t border-[#334E68] bg-[#102A43] rounded-b-2xl flex justify-end">
+          <button onClick={onClose} className="px-6 py-2 bg-[#334E68] hover:bg-[#486581] text-white font-bold rounded-lg transition-colors">
+            Entendido
           </button>
         </div>
 
       </div>
     </div>
   );
-};
-
-export default LegalModal;
+}
