@@ -2,6 +2,7 @@
 
 // --- CURSO 1 ---
 export const COURSE_1 = {
+  id: "crear-vender-ebooks", // NUEVO ID
   title: "Crear y Vender Ebooks con IA",
   category: "E-Publishing",
   image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1000&auto=format&fit=crop",
@@ -30,6 +31,7 @@ export const COURSE_1 = {
 
 // --- CURSO 2 ---
 export const COURSE_2 = {
+  id: "packs-graficos-etsy", // NUEVO ID
   title: "Diseño de Packs Gráficos para Etsy",
   category: "Diseño",
   image: "https://images.unsplash.com/photo-1626785774583-b61d28303695?q=80&w=1000&auto=format&fit=crop",
@@ -57,6 +59,7 @@ export const COURSE_2 = {
 
 // --- CURSO 3 ---
 export const COURSE_3 = {
+  id: "youtube-automation", // NUEVO ID
   title: "YouTube Automation (Faceless)",
   category: "Video",
   image: "https://images.unsplash.com/photo-1611162616475-46b635cb6868?q=80&w=1000&auto=format&fit=crop",
@@ -83,6 +86,7 @@ export const COURSE_3 = {
 
 // --- CURSO 4 ---
 export const COURSE_4 = {
+  id: "reels-tiktok-b2b", // NUEVO ID
   title: "Reels y TikToks Automáticos B2B",
   category: "Marketing",
   image: "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?q=80&w=1000&auto=format&fit=crop",
@@ -109,6 +113,7 @@ export const COURSE_4 = {
 
 // --- CURSO 5 ---
 export const COURSE_5 = {
+  id: "chatbots-negocios", // NUEVO ID
   title: "Chatbots IA para Negocios Locales",
   category: "Servicios",
   image: "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=1000&auto=format&fit=crop",
@@ -135,6 +140,7 @@ export const COURSE_5 = {
 
 // --- CURSO 6 ---
 export const COURSE_6 = {
+  id: "crear-cursos-ia", // NUEVO ID
   title: "Creación de Cursos Online con IA",
   category: "Educación",
   image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1000&auto=format&fit=crop",
@@ -157,6 +163,7 @@ export const COURSE_6 = {
 
 // --- CURSO 7 ---
 export const COURSE_7 = {
+  id: "paginas-web-express", // NUEVO ID
   title: "Páginas Web Express con IA",
   category: "Desarrollo",
   image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1000&auto=format&fit=crop",
@@ -179,6 +186,7 @@ export const COURSE_7 = {
 
 // --- CURSO 8 ---
 export const COURSE_8 = {
+  id: "dropshipping-ia", // NUEVO ID
   title: "Dropshipping Automatizado",
   category: "E-commerce",
   image: "https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?q=80&w=1000&auto=format&fit=crop",
@@ -201,6 +209,7 @@ export const COURSE_8 = {
 
 // --- CURSO 9 ---
 export const COURSE_9 = {
+  id: "copywriting-persuasion", // NUEVO ID
   title: "Copywriting y Persuasión IA",
   category: "Marketing",
   image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=1000&auto=format&fit=crop",
@@ -223,6 +232,7 @@ export const COURSE_9 = {
 
 // --- CURSO 10 ---
 export const COURSE_10 = {
+  id: "newsletter-automatizada", // NUEVO ID
   title: "Newsletter Automatizada",
   category: "Media",
   image: "https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?q=80&w=1000&auto=format&fit=crop",
@@ -245,6 +255,7 @@ export const COURSE_10 = {
 
 // --- CURSO 11 ---
 export const COURSE_11 = {
+  id: "crear-apps-saas", // NUEVO ID
   title: "Crear Apps SaaS (No-Code)",
   category: "Desarrollo",
   image: "https://images.unsplash.com/photo-1551650975-87deedd944c3?q=80&w=1000&auto=format&fit=crop",
@@ -267,6 +278,7 @@ export const COURSE_11 = {
 
 // --- CURSO 12 ---
 export const COURSE_12 = {
+  id: "negocios-influencers", // NUEVO ID
   title: "Negocios para Influencers IA",
   category: "Social",
   image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop",
@@ -289,6 +301,7 @@ export const COURSE_12 = {
 
 // --- CURSO 13 ---
 export const COURSE_13 = {
+  id: "redaccion-seo", // NUEVO ID
   title: "Redacción SEO con IA",
   category: "Marketing",
   image: "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?q=80&w=1000&auto=format&fit=crop",
@@ -311,6 +324,7 @@ export const COURSE_13 = {
 
 // --- CURSO 14 ---
 export const COURSE_14 = {
+  id: "libros-infantiles", // NUEVO ID
   title: "Libros Infantiles con IA",
   category: "E-Publishing",
   image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=1000&auto=format&fit=crop",
@@ -333,6 +347,7 @@ export const COURSE_14 = {
 
 // --- CURSO 15 ---
 export const COURSE_15 = {
+  id: "bots-whatsapp", // NUEVO ID
   title: "Bots de WhatsApp Ventas",
   category: "Ventas",
   image: "https://images.unsplash.com/photo-1611746347164-c23c43118906?q=80&w=1000&auto=format&fit=crop",

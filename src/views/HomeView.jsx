@@ -1,17 +1,18 @@
 // src/views/HomeView.jsx
 import React, { useEffect, useRef } from 'react';
 import { Sparkles, Search, Loader, Lock, CalendarCheck, Crown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import ToolsSection from '../components/ToolsSection'; // Componente de herramientas
+import ToolsSection from '../components/ToolsSection'; 
 import { Badge } from '../components/UI';
 import { COLORS, formatCurrency, ORIGINAL_PRICE, COURSE_PRICE } from '../utils/constants';
 
 const HomeView = ({ 
-  courses, loadingCourses, userData, user, handleCourseClick, 
+  courses, loadingCourses, userData, user, 
   searchTerm, setSearchTerm, 
-  setView, handleLogin, handleLogout, 
-  onNavigate 
+  handleLogin, handleLogout 
 }) => {
+  const navigate = useNavigate();
   const containerRef = useRef(null);
   const cardsRef = useRef([]); 
   const state = useRef({ position: 0, velocity: 0, isDragging: false, startX: 0, lastX: 0 });
@@ -78,18 +79,16 @@ const HomeView = ({
   const handleStart = (clientX) => { const s = state.current; s.isDragging = true; s.startX = clientX; s.lastX = clientX; s.velocity = 0; };
   const handleMove = (clientX) => { const s = state.current; if (!s.isDragging) return; const delta = clientX - s.lastX; s.position += delta; s.lastX = clientX; s.velocity = delta; };
   const handleEnd = () => { state.current.isDragging = false; };
-  const handleCardClick = (course) => { if (Math.abs(state.current.velocity) > 2) return; handleCourseClick(course); };
+  
+  // NAVEGACIÓN DIRECTA AL DETALLE DEL CURSO
+  const handleCardClick = (course) => { 
+    if (Math.abs(state.current.velocity) > 2) return; 
+    navigate(`/curso/${course.id}`);
+  };
 
   return (
     <div className={`pb-20 min-h-screen font-sans relative z-10 overflow-x-hidden select-none`}>
-      <Navbar 
-        user={user} 
-        userData={userData} 
-        setView={setView} 
-        onNavigate={onNavigate} 
-        handleLogin={handleLogin} 
-        handleLogout={handleLogout} 
-      />
+      <Navbar user={user} userData={userData} handleLogin={handleLogin} handleLogout={handleLogout} />
       
       {/* HEADER HERO */}
       <div className={`relative pt-12 pb-4 px-6 text-center overflow-hidden z-10`}>
@@ -101,7 +100,7 @@ const HomeView = ({
             </Badge>
           ) : (
             <button 
-              onClick={() => onNavigate('subscription')} 
+              onClick={() => navigate('/suscripcion')} 
               className="mb-6 hover:scale-105 transition-transform active:scale-95 group"
             >
               <Badge color="orange" className="shadow-lg inline-flex items-center gap-1 cursor-pointer group-hover:bg-[#F9703E]/30 transition-colors">
@@ -158,7 +157,7 @@ const HomeView = ({
                             </span>
                           )}
                           <button onClick={(e) => { e.stopPropagation(); handleCardClick(course); }} className={`${isUnlocked ? 'bg-[#48BB78]/20 text-[#48BB78]' : `${COLORS.accentOrange} text-white`} px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:scale-105 transition-transform cursor-pointer`}>
-                            {isUnlocked ? 'Acceder' : formatCurrency(COURSE_PRICE)}
+                            {isUnlocked ? 'Ver Curso' : formatCurrency(COURSE_PRICE)}
                           </button>
                         </div>
                     </div>
@@ -170,8 +169,7 @@ const HomeView = ({
         )}
       </div>
 
-      {/* AQUÍ ESTÁ EL CAMBIO: Pasamos onNavigate a la sección de herramientas */}
-      <ToolsSection onNavigate={onNavigate} />
+      <ToolsSection />
       
     </div>
   );

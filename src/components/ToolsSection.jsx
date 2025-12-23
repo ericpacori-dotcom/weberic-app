@@ -1,34 +1,48 @@
 // src/components/ToolsSection.jsx
 import React, { useState, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ExternalLink, Zap, Star, ChevronRight, Tag } from 'lucide-react';
 import { COLORS } from '../utils/constants';
-import { AI_TOOLS_DATA } from '../content/tools_data';
+// IMPORTANTE: Importamos la base de datos masiva
+import { AI_TOOLS_DATA } from '../content/tools_data'; 
 
-const ToolsSection = ({ onNavigate }) => {
+const ToolsSection = () => {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('Todas');
   
-  // REFERENCIA Y ESTADOS PARA EL ARRASTRE (DRAG TO SCROLL)
+  // --- LÓGICA DE ARRASTRE DEL MOUSE (DRAG TO SCROLL) ---
   const sliderRef = useRef(null);
   const [isDown, setIsDown] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
-  // 1. OBTENER CATEGORÍAS
+  // 1. OBTENER CATEGORÍAS ÚNICAS
   const categories = useMemo(() => {
-    const uniqueCats = new Set(AI_TOOLS_DATA.map(t => t.category.trim())); 
-    return ['Todas', ...Array.from(uniqueCats).sort()];
+    // Obtenemos todas las categorías de las herramientas
+    const allCats = AI_TOOLS_DATA.map(t => t.category ? t.category.trim() : 'Otros');
+    const uniqueCats = new Set(allCats);
+    
+    // Ordenamos alfabéticamente
+    const sortedCats = Array.from(uniqueCats).sort();
+    
+    // Agregamos "Todas" al principio explícitamente
+    return ['Todas', ...sortedCats];
   }, []);
 
   // 2. FILTRAR HERRAMIENTAS
   const filteredTools = useMemo(() => {
     let tools = AI_TOOLS_DATA;
+
+    // Si la categoría no es "Todas", filtramos
     if (activeCategory !== 'Todas') {
-      tools = tools.filter(tool => tool.category.trim() === activeCategory);
+      tools = tools.filter(tool => (tool.category ? tool.category.trim() : 'Otros') === activeCategory);
     }
-    return tools.sort((a, b) => b.popularity - a.popularity);
+
+    // Ordenar por popularidad (mayor a menor)
+    return tools.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
   }, [activeCategory]);
 
-  // --- LÓGICA DE ARRASTRE DEL MOUSE ---
+  // --- MANEJADORES DE SCROLL ---
   const handleMouseDown = (e) => {
     setIsDown(true);
     setStartX(e.pageX - sliderRef.current.offsetLeft);
@@ -42,13 +56,12 @@ const ToolsSection = ({ onNavigate }) => {
     if (!isDown) return;
     e.preventDefault();
     const x = e.pageX - sliderRef.current.offsetLeft;
-    const walk = (x - startX) * 2; // Velocidad del deslizamiento
+    const walk = (x - startX) * 2; 
     sliderRef.current.scrollLeft = scrollLeft - walk;
   };
 
   return (
     <div className="relative py-12 px-4 md:px-6 z-10 min-h-screen">
-      {/* ESTILOS CSS PARA OCULTAR BARRA */}
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -69,9 +82,8 @@ const ToolsSection = ({ onNavigate }) => {
           </p>
         </div>
 
-        {/* BARRA DE CATEGORÍAS (Deslizable con Mouse) */}
+        {/* BARRA DE CATEGORÍAS */}
         <div className="sticky top-20 z-30 bg-[#102A43]/95 backdrop-blur-md py-4 -mx-4 px-4 md:mx-0 md:px-0 mb-8 border-b border-[#486581]/50">
-          
           <div 
             ref={sliderRef}
             className="flex overflow-x-auto gap-2 pb-2 hide-scrollbar justify-start md:justify-center items-center select-none cursor-grab active:cursor-grabbing"
@@ -83,10 +95,7 @@ const ToolsSection = ({ onNavigate }) => {
              {categories.map(cat => (
                <button
                  key={cat}
-                 onClick={() => {
-                    // Solo activar si no estamos arrastrando (click limpio)
-                    if(!isDown) setActiveCategory(cat); 
-                 }}
+                 onClick={() => { if(!isDown) setActiveCategory(cat); }}
                  className={`whitespace-nowrap px-5 py-2 rounded-full text-xs font-bold transition-all border flex-shrink-0 pointer-events-auto ${
                    activeCategory === cat 
                    ? `bg-[#F9703E] text-white border-[#F9703E] shadow-lg scale-105` 
@@ -97,18 +106,17 @@ const ToolsSection = ({ onNavigate }) => {
                </button>
              ))}
           </div>
-          
           <p className="text-center text-[10px] text-[#BCCCDC] font-bold mt-2 uppercase tracking-widest">
             {isDown ? "Deslizando..." : `Mostrando ${filteredTools.length} herramientas de ${activeCategory}`}
           </p>
         </div>
 
         {/* GRID DE HERRAMIENTAS */}
-        <div key={activeCategory} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-fade-in-up">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-fade-in-up">
           {filteredTools.map((tool) => (
             <div 
               key={tool.id}
-              onClick={() => onNavigate('tool-detail', tool)} 
+              onClick={() => navigate(`/herramienta/${tool.id}`)}
               className={`${COLORS.bgCard} p-5 rounded-3xl border border-[#486581] hover:border-[#F9703E] group transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl flex flex-col relative overflow-hidden cursor-pointer h-full`}
             >
               <div className={`absolute top-4 right-4 text-[#486581] group-hover:text-[#F9703E] transition-colors`}>
@@ -131,14 +139,14 @@ const ToolsSection = ({ onNavigate }) => {
                     </h3>
                     <div className="flex items-center gap-1">
                        <Star size={10} className="text-yellow-400 fill-yellow-400"/>
-                       <span className="text-[9px] font-bold text-[#BCCCDC]">{tool.popularity}% Pop.</span>
+                       <span className="text-[9px] font-bold text-[#BCCCDC]">{tool.popularity || 80}% Pop.</span>
                     </div>
                  </div>
               </div>
               
               <div className="mb-3">
                 <span className={`inline-flex items-center gap-1 py-0.5 px-2 rounded-md bg-[#334E68] text-[#F9703E] text-[9px] font-bold uppercase tracking-wider`}>
-                   <Tag size={8} /> {tool.category}
+                   <Tag size={8} /> {tool.category || 'General'}
                 </span>
               </div>
 
@@ -147,7 +155,7 @@ const ToolsSection = ({ onNavigate }) => {
               </p>
               
               <div className="pt-3 border-t border-[#486581] flex justify-between items-center text-[10px] font-bold text-[#F9703E] opacity-60 group-hover:opacity-100 transition-opacity">
-                 <span>VER PROMPTS & TIPS</span>
+                 <span>VER DETALLES</span>
                  <ExternalLink size={10}/>
               </div>
             </div>
@@ -156,7 +164,7 @@ const ToolsSection = ({ onNavigate }) => {
         
         {filteredTools.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-xl font-bold text-[#BCCCDC]">No hay herramientas en esta categoría.</p>
+            <p className="text-xl font-bold text-[#BCCCDC]">No se encontraron herramientas.</p>
             <button onClick={() => setActiveCategory('Todas')} className="text-[#F9703E] underline mt-2 text-sm font-bold">
               Ver todas las herramientas
             </button>

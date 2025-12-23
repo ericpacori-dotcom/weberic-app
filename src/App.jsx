@@ -1,11 +1,12 @@
 // src/App.jsx
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { CheckCircle, Loader, CreditCard, Globe, Bell, AlertTriangle } from 'lucide-react';
 
 // FIREBASE IMPORTS 
 import { db, auth, googleProvider } from './firebase';
 import { 
-  collection, getDocs, doc, setDoc, updateDoc, arrayUnion, getDoc
+  collection, getDocs, doc, setDoc, updateDoc, onSnapshot 
 } from 'firebase/firestore';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 
@@ -53,15 +54,25 @@ const API_URL = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURICompone
 
 initMercadoPago(MP_PUBLIC_KEY, { locale: 'es-PE' });
 
+// COMPONENTE PARA MANEJAR SCROLL AL CAMBIAR DE RUTA
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
+
 export default function App() {
+  const navigate = useNavigate(); // Hook para navegar
   const [showSplash, setShowSplash] = useState(true);
   const [finishSplashAnimation, setFinishSplashAnimation] = useState(false);
   
-  const [view, setView] = useState('home'); 
-  const [selectedCourse, setSelectedCourse] = useState(null);
+  // ESTADOS GLOBALES
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isSubscriptionPayment, setIsSubscriptionPayment] = useState(false); 
   const [paymentMethod, setPaymentMethod] = useState('mercadopago');
+  const [courseToBuy, setCourseToBuy] = useState(null); // Curso seleccionado para pagar
   
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [legalModalType, setLegalModalType] = useState(null); 
@@ -87,43 +98,22 @@ export default function App() {
     return () => { clearTimeout(timerExit); clearTimeout(timerRemove); };
   }, []);
 
-  // --- 🚀 DETECTOR AUTOMÁTICO DE PAGOS MERCADO PAGO ---
+  // --- 🔒 SEGURIDAD: DETECTOR DE PAGOS ---
   useEffect(() => {
     const checkPaymentStatus = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const status = urlParams.get('status');
-      const paymentId = urlParams.get('payment_id') || urlParams.get('preapproval_id'); 
       
       if (status === 'approved' && user) {
-        try {
-            const userRef = doc(db, "users", user.uid);
-            
-            if (urlParams.has('preapproval_id') || isSubscriptionPayment) {
-                await updateDoc(userRef, { 
-                    isSubscribed: true,
-                    subscriptionStartDate: new Date().toISOString(),
-                    subscriptionProvider: 'mercadopago',
-                    subscriptionId: paymentId || 'auto_detected'
-                });
-                setUserData(prev => ({ ...prev, isSubscribed: true }));
-                showNotification("¡Suscripción Activada Automáticamente!", "success");
-            } else {
-                if (selectedCourse) {
-                    await updateDoc(userRef, { purchasedCourses: arrayUnion(selectedCourse.id) });
-                    setUserData(prev => ({ ...prev, purchasedCourses: [...prev.purchasedCourses, selectedCourse.id] }));
-                    showNotification("¡Curso Desbloqueado!", "success");
-                }
-            }
-
-            window.history.replaceState({}, document.title, window.location.pathname);
-            setShowPaymentModal(false);
-            
-        } catch (error) {
-            console.error("Error activando producto:", error);
+        if (urlParams.has('preapproval_id') || isSubscriptionPayment) {
+            showNotification("¡Suscripción Recibida! Activando tu cuenta...", "success");
+        } else {
+            showNotification("¡Pago Exitoso! Tu curso se desbloqueará en breve.", "success");
         }
+        window.history.replaceState({}, document.title, window.location.pathname);
+        setShowPaymentModal(false);
       }
     };
-
     if (!loadingCourses && user) {
         checkPaymentStatus();
     }
@@ -180,82 +170,66 @@ export default function App() {
     return () => { clearTimeout(initialTimer); clearInterval(interval); };
   }, [liveNews]); 
 
-  // --- NAVEGACIÓN ---
-  useEffect(() => {
-    const handlePopState = (event) => {
-      if (event.state) {
-        setView(event.state.view);
-        setSelectedCourse(event.state.course || null);
-      } else {
-        setView('home');
-        setSelectedCourse(null);
-      }
-    };
-    window.history.replaceState({ view: 'home', course: null }, '');
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  const navigateTo = (newView, course = null) => {
-    window.history.pushState({ view: newView, course }, '');
-    setView(newView);
-    if (course) setSelectedCourse(course);
-    window.scrollTo(0, 0); 
-  };
-
-  const goBack = () => {
-    if (view !== 'home') window.history.back(); 
-    else navigateTo('home');
-  };
-
   // --- CARGA DATOS ---
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "courses"));
         const coursesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setCourses(coursesData);
+        // Si no hay cursos en BD (primera vez), usamos los locales
+        setCourses(coursesData.length > 0 ? coursesData : ALL_COURSES);
         setLoadingCourses(false);
-      } catch (error) { console.error(error); setLoadingCourses(false); }
+      } catch (error) { 
+        console.error(error); 
+        setCourses(ALL_COURSES); // Fallback a datos locales
+        setLoadingCourses(false); 
+      }
     };
     fetchCourses();
   }, []);
 
+  // --- 🔒 SEGURIDAD: GESTIÓN DE USUARIO EN TIEMPO REAL ---
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
-        const userDocRef = doc(db, "users", currentUser.uid);
-        const docSnap = await getDoc(userDocRef);
-        if (docSnap.exists()) { setUserData(docSnap.data()); } 
-        else { 
-          const newUserData = { email: currentUser.email, purchasedCourses: [], isSubscribed: false }; 
-          await setDoc(userDocRef, newUserData, { merge: true }); 
-          setUserData(newUserData); 
-        }
-      } else { setUserData({ purchasedCourses: [], isSubscribed: false }); }
+      if (!currentUser) {
+         setUserData({ purchasedCourses: [], isSubscribed: false });
+      }
     });
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
 
+  useEffect(() => {
+    if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setUserData(docSnap.data());
+            } else {
+                const newUserData = { email: user.email, purchasedCourses: [], isSubscribed: false };
+                setDoc(userDocRef, newUserData, { merge: true });
+                setUserData(newUserData);
+            }
+        });
+        return () => unsubscribeSnapshot();
+    }
+  }, [user]);
+
   const handleLogin = async () => { try { await signInWithPopup(auth, googleProvider); showNotification("¡Bienvenido!", "success"); } catch (error) { showNotification("Error login", "error"); } };
-  const handleLogout = async () => { await signOut(auth); setView('home'); };
+  const handleLogout = async () => { await signOut(auth); navigate('/'); };
   const showNotification = (msg, type = 'success') => { setNotification({ msg, type }); setTimeout(() => setNotification(null), 4000); };
 
-  const handleCourseClick = (course) => {
-    const isUnlocked = course.isFree || userData?.isSubscribed || userData?.purchasedCourses?.includes(course.id);
-    if (isUnlocked) { navigateTo('course-detail', course); } 
-    else {
-      if (!user) { showNotification("Inicia sesión primero", "error"); handleLogin(); return; }
-      setSelectedCourse(course);
-      setIsSubscriptionPayment(false); 
-      setPreferenceId(null);
-      setPaymentMethod('mercadopago');
-      setShowPaymentModal(true);
-    }
+  // --- INICIAR PROCESO DE PAGO (Llamado desde CourseDetailView) ---
+  const initiatePayment = (course) => {
+    if (!user) { showNotification("Inicia sesión primero", "error"); handleLogin(); return; }
+    setCourseToBuy(course);
+    setIsSubscriptionPayment(false); 
+    setPreferenceId(null);
+    setPaymentMethod('mercadopago');
+    setShowPaymentModal(true);
   };
 
-  const handleSubscriptionClick = () => {
+  const initiateSubscription = () => {
     if (!user) { showNotification("Inicia sesión para suscribirte", "error"); handleLogin(); return; }
     setIsSubscriptionPayment(true);
     setPreferenceId(null);
@@ -263,27 +237,24 @@ export default function App() {
     setShowPaymentModal(true);
   };
 
-  // --- LÓGICA DE PAGO ---
+  // --- LÓGICA DE CREACIÓN DE PREFERENCIA (BACKEND) ---
   const createPreference = async () => {
     setIsLoadingPayment(true);
     
-    // CASO 1: SUSCRIPCIÓN CON MERCADO PAGO
     if (isSubscriptionPayment) {
-        // Agregamos un pequeño delay para que el usuario lea el mensaje de "Redirigiendo..."
         setTimeout(() => {
              window.location.href = `https://www.mercadopago.com.pe/subscriptions/checkout?preapproval_plan_id=${MP_SUBSCRIPTION_PLAN_ID}`;
         }, 1500);
         return; 
     }
 
-    // CASO 2: PAGO ÚNICO (CURSO)
     try {
       const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          id: selectedCourse.id, 
-          title: selectedCourse.title, 
+          id: courseToBuy.id, 
+          title: courseToBuy.title, 
           price: COURSE_PRICE, 
           userId: user.uid 
         }), 
@@ -294,6 +265,7 @@ export default function App() {
     finally { setIsLoadingPayment(false); }
   };
 
+  // NOTA: PayPal sigue usando escritura en frontend por ahora.
   const handlePayPalApprove = async (data, actions) => {
     try {
       const userRef = doc(db, "users", user.uid);
@@ -304,13 +276,11 @@ export default function App() {
               subscriptionProvider: 'paypal',
               subscriptionId: data.subscriptionID 
           }); 
-          setUserData(prev => ({ ...prev, isSubscribed: true })); 
       } 
       else { 
-          await updateDoc(userRef, { purchasedCourses: arrayUnion(selectedCourse.id) }); 
-          setUserData(prev => ({ ...prev, purchasedCourses: [...prev.purchasedCourses, selectedCourse.id] })); 
+          await updateDoc(userRef, { purchasedCourses: arrayUnion(courseToBuy.id) }); 
       }
-      showNotification("¡Pago Exitoso! Disfruta.", "success");
+      showNotification("¡Pago Exitoso con PayPal!", "success");
       setShowPaymentModal(false);
     } catch (err) { showNotification("Error guardando compra", "error"); }
   };
@@ -323,6 +293,7 @@ export default function App() {
         vault: true 
     }}>
       <div className={`font-sans ${COLORS.textLight} ${COLORS.bgMain} min-h-screen relative animate-fade-in`}>
+        <ScrollToTop />
         <NeuralBackground />
 
         {notification && (
@@ -331,34 +302,49 @@ export default function App() {
           </div>
         )}
         
-        {view === 'home' && (
-          <HomeView 
-            courses={courses} loadingCourses={loadingCourses} userData={userData} user={user} 
-            handleCourseClick={handleCourseClick} searchTerm={searchTerm} setSearchTerm={setSearchTerm} 
-            setView={setView} handleLogin={handleLogin} handleLogout={handleLogout} 
-            openLegalModal={setLegalModalType} onNavigate={navigateTo} 
-          />
-        )}
-        
-        {view === 'news' && (
-          <NewsView user={user} userData={userData} setView={setView} onNavigate={navigateTo} handleLogin={handleLogin} handleLogout={handleLogout} news={liveNews} />
-        )}
+        {/* SISTEMA DE RUTAS */}
+        <Routes>
+          <Route path="/" element={
+            <HomeView 
+              courses={courses} loadingCourses={loadingCourses} userData={userData} user={user} 
+              searchTerm={searchTerm} setSearchTerm={setSearchTerm} 
+              handleLogin={handleLogin} handleLogout={handleLogout} 
+              openLegalModal={setLegalModalType} 
+              // Nota: Ya no pasamos setView, HomeView usará Link o useNavigate
+            />
+          } />
+          
+          <Route path="/noticias" element={
+            <NewsView user={user} userData={userData} handleLogin={handleLogin} handleLogout={handleLogout} news={liveNews} />
+          } />
 
-        {view === 'subscription' && (
-          <SubscriptionView onSubscribe={handleSubscriptionClick} isSubscribed={userData?.isSubscribed} setView={setView} onNavigate={navigateTo} user={user} handleLogin={handleLogin} handleLogout={handleLogout} userData={userData} goBack={goBack} />
-        )}
+          <Route path="/suscripcion" element={
+            <SubscriptionView onSubscribe={initiateSubscription} isSubscribed={userData?.isSubscribed} user={user} handleLogin={handleLogin} handleLogout={handleLogout} userData={userData} />
+          } />
 
-        {view === 'profile' && (
-          <ProfileView user={user} userData={userData} courses={courses} setView={setView} onNavigate={navigateTo} handleLogout={handleLogout} goBack={goBack} />
-        )}
+          <Route path="/perfil" element={
+            <ProfileView user={user} userData={userData} courses={courses} handleLogout={handleLogout} />
+          } />
 
-        {view === 'course-detail' && (
-          <CourseDetailView selectedCourse={selectedCourse} isRich={selectedCourse?.isRichContent} setView={setView} onNavigate={navigateTo} user={user} handleLogin={handleLogin} handlePayment={() => { setIsSubscriptionPayment(false); createPreference(); }} handleLogout={handleLogout} userData={userData} openRefundModal={() => setShowRefundModal(true)} goBack={goBack} />
-        )}
+          <Route path="/curso/:courseId" element={
+            <CourseDetailView 
+              courses={courses} // Pasamos TODOS los cursos, el componente buscará el ID
+              user={user} 
+              handleLogin={handleLogin} 
+              handlePayment={initiatePayment} 
+              handleLogout={handleLogout} 
+              userData={userData} 
+              openRefundModal={() => setShowRefundModal(true)} 
+            />
+          } />
 
-        {view === 'tool-detail' && (
-          <ToolDetailView tool={selectedCourse} setView={setView} onNavigate={navigateTo} user={user} handleLogin={handleLogin} handleLogout={handleLogout} goBack={goBack} userData={userData} />
-        )}
+          <Route path="/herramienta/:toolId" element={
+            <ToolDetailView user={user} handleLogin={handleLogin} handleLogout={handleLogout} userData={userData} />
+          } />
+          
+          {/* Ruta 404 - Redirigir a Home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
 
         {showPaymentModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#102A43]/80 backdrop-blur-sm animate-fade-in-up">
@@ -380,11 +366,10 @@ export default function App() {
                    </p>
                 </div>
 
-                {/* ⚠️ AVISO DE SEGURIDAD PARA EL USUARIO */}
                 <div className="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-xl mb-6 flex items-start gap-2">
                     <AlertTriangle size={16} className="text-yellow-400 flex-shrink-0 mt-0.5" />
                     <p className="text-[10px] text-yellow-200/90 leading-tight text-left">
-                       <b>¡IMPORTANTE!</b> Al finalizar tu pago, asegúrate de hacer clic en <b>"Volver al sitio"</b> o esperar la redirección para activar tu cuenta automáticamente.
+                       <b>¡IMPORTANTE!</b> Al finalizar tu pago, asegúrate de hacer clic en <b>"Volver al sitio"</b> para activar tu cuenta automáticamente.
                     </p>
                 </div>
 
@@ -414,16 +399,14 @@ export default function App() {
                         createSubscription={isSubscriptionPayment ? (data, actions) => {
                             return actions.subscription.create({
                                 'plan_id': PAYPAL_PLAN_ID,
-                                'application_context': {
-                                   'shipping_preference': 'NO_SHIPPING' 
-                                }
+                                'application_context': { 'shipping_preference': 'NO_SHIPPING' }
                             });
                         } : undefined}
                         createOrder={!isSubscriptionPayment ? (data, actions) => {
                             return actions.order.create({ 
                                 purchase_units: [{ 
                                   amount: { value: COURSE_PRICE.toString() }, 
-                                  description: selectedCourse.title,
+                                  description: courseToBuy.title,
                                   category: "DIGITAL_GOODS" 
                                 }],
                                 application_context: {
@@ -448,7 +431,6 @@ export default function App() {
         )}
 
         <LegalModal type={legalModalType} onClose={() => setLegalModalType(null)} />
-        {view === 'home' && <Footer onOpenLegal={setLegalModalType} />}
         {showSplash && <SplashScreen finishAnimation={finishSplashAnimation} />}
       </div>
     </PayPalScriptProvider>
