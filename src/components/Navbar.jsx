@@ -1,6 +1,6 @@
 // src/components/Navbar.jsx
 import React from 'react';
-import { User, Crown, ChevronRight } from 'lucide-react';
+import { User, Crown, ChevronRight, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { COLORS } from '../utils/constants';
 import { Button } from './UI';
@@ -18,6 +18,16 @@ const Navbar = ({ user, userData, handleLogin }) => {
           <span className={`font-black text-2xl ${COLORS.textLight} tracking-tight`}>
             haeric <span className={`${COLORS.textOrange} group-hover:text-white transition-colors duration-300`}>Activos</span>
           </span>
+        </div>
+
+        {/* --- NUEVO: BOTÓN DE NOTICIAS (CENTRAL) --- */}
+        <div className="hidden md:flex items-center">
+           <button 
+             onClick={() => navigate('/noticias')}
+             className={`flex items-center gap-2 font-bold text-sm ${COLORS.textMuted} hover:text-[#F9703E] transition-colors py-2 px-4 rounded-full hover:bg-[#102A43]/50 active:scale-95`}
+           >
+             <Bell size={18} className="animate-swing text-[#F9703E]" /> Novedades IA
+           </button>
         </div>
 
         {/* ÁREA DE USUARIO */}
