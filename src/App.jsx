@@ -87,7 +87,6 @@ const getSmartDomain = (sourceName) => {
     if (lower.includes('gestion')) return 'gestion.pe';
 
     // Fallback genérico: quitar espacios y acentos + .com
-    // Ej: "Nuevo Diario" -> "nuevodiario.com"
     return lower.normalize("NFD").replace(/[\u0300-\u036f]/g, "") + ".com";
 };
 
@@ -157,7 +156,7 @@ export default function App() {
     if (!loadingCourses && user) checkPaymentStatus();
   }, [user, loadingCourses]); 
 
-  // --- CARGAR NOTICIAS (AHORA SÍ CON LOGOS REALES) ---
+  // --- CARGAR NOTICIAS CON LOGOS REALES ---
   useEffect(() => {
     const fetchNews = async () => {
       try {
@@ -307,42 +306,106 @@ export default function App() {
         </Routes>
 
         {showPaymentModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#102A43]/80 backdrop-blur-sm animate-fade-in-up">
-              <div className={`${COLORS.bgCard} rounded-[2rem] shadow-2xl max-w-md w-full p-8 text-center relative border border-[#627D98] animate-pop-in max-h-[90vh] overflow-y-auto`}>
-                <h3 className={`text-3xl font-black mb-4 ${COLORS.textLight}`}>Procesando Pago</h3>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#102A43]/90 backdrop-blur-md animate-fade-in-up">
+            <div className={`${COLORS.bgCard} rounded-[2rem] shadow-2xl max-w-md w-full p-8 text-center relative border border-[#627D98] animate-pop-in max-h-[90vh] overflow-y-auto`}>
+              
+              {/* TÍTULO */}
+              <h3 className={`text-2xl font-black mb-2 ${COLORS.textLight}`}>
+                {isSubscriptionPayment ? "Elige tu Suscripción" : "Finalizar Compra"}
+              </h3>
+              <p className="text-[#829AB1] text-sm mb-6 font-medium">
+                Selecciona tu método de pago preferido
+              </p>
+
+              {/* --- SELECTOR DE MÉTODO DE PAGO --- */}
+              <div className="flex gap-4 mb-8">
+                {/* Botón Mercado Pago */}
+                <button
+                  onClick={() => { setPaymentMethod('mercadopago'); setPreferenceId(null); }}
+                  className={`flex-1 py-4 px-2 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-2 group ${
+                    paymentMethod === 'mercadopago' 
+                      ? 'border-[#009EE3] bg-[#009EE3]/10 shadow-[0_0_20px_rgba(0,158,227,0.3)]' 
+                      : 'border-[#486581] hover:border-[#009EE3]/50 hover:bg-[#102A43]'
+                  }`}
+                >
+                  <CreditCard size={28} className={paymentMethod === 'mercadopago' ? 'text-[#009EE3]' : 'text-[#829AB1]'} />
+                  <div className="flex flex-col">
+                    <span className={`font-bold text-sm ${paymentMethod === 'mercadopago' ? 'text-[#009EE3]' : 'text-[#829AB1]'}`}>Mercado Pago</span>
+                    <span className="text-[10px] font-bold text-[#829AB1] opacity-80">Soles (S/.)</span>
+                  </div>
+                </button>
+
+                {/* Botón PayPal */}
+                <button
+                  onClick={() => { setPaymentMethod('paypal'); setPreferenceId(null); }}
+                  className={`flex-1 py-4 px-2 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-2 group ${
+                    paymentMethod === 'paypal' 
+                      ? 'border-[#FFC439] bg-[#FFC439]/10 shadow-[0_0_20px_rgba(255,196,57,0.2)]' 
+                      : 'border-[#486581] hover:border-[#FFC439]/50 hover:bg-[#102A43]'
+                  }`}
+                >
+                  {/* Logo Simulado de PayPal con texto */}
+                  <div className="flex items-center justify-center w-7 h-7 bg-white rounded-full font-black italic text-[#003087] text-xs">P</div>
+                  <div className="flex flex-col">
+                    <span className={`font-bold text-sm ${paymentMethod === 'paypal' ? 'text-[#FFC439]' : 'text-[#829AB1]'}`}>PayPal</span>
+                    <span className="text-[10px] font-bold text-[#829AB1] opacity-80">Dólares ($)</span>
+                  </div>
+                </button>
+              </div>
+
+              {/* --- LÓGICA DE VISUALIZACIÓN --- */}
+              <div className="min-h-[150px] flex flex-col justify-center">
                 {paymentMethod === 'mercadopago' ? (
-                    isSubscriptionPayment ? (
-                        <Button onClick={createPreference} variant="primary" className="w-full h-14 text-lg shadow-lg">
-                            {isLoadingPayment ? <Loader className="animate-spin mx-auto"/> : "Suscribirse con Mercado Pago"}
+                  // VISTA MERCADO PAGO
+                  isSubscriptionPayment ? (
+                    <div className="animate-fade-in">
+                      <p className="text-sm text-[#829AB1] mb-4">Suscripción mensual automática en Soles.</p>
+                      <Button onClick={createPreference} variant="primary" className="w-full h-14 text-lg shadow-lg bg-[#009EE3] hover:bg-[#007eb5] border-none text-white">
+                        {isLoadingPayment ? <Loader className="animate-spin mx-auto"/> : "Suscribirse con Mercado Pago"}
+                      </Button>
+                    </div>
+                  ) : (
+                    !preferenceId ? (
+                      <div className="animate-fade-in">
+                        <p className="text-sm text-[#829AB1] mb-4">Pago único seguro en Soles.</p>
+                        <Button onClick={createPreference} variant="primary" className="w-full h-14 text-lg shadow-lg bg-[#009EE3] hover:bg-[#007eb5] border-none text-white">
+                          {isLoadingPayment ? <Loader className="animate-spin mx-auto"/> : `Pagar ${formatCurrency(COURSE_PRICE)}`}
                         </Button>
+                      </div>
                     ) : (
-                        !preferenceId ? (
-                            <Button onClick={createPreference} variant="primary" className="w-full h-14 text-lg shadow-lg">
-                                {isLoadingPayment ? <Loader className="animate-spin mx-auto"/> : "Pagar Curso Único"}
-                            </Button>
-                        ) : (
-                            <div className="animate-fade-in-up"><Wallet initialization={{ preferenceId }} customization={{ texts:{ valueProp: 'smart_option'}}} /></div>
-                        )
+                      <div className="animate-fade-in-up">
+                        <Wallet initialization={{ preferenceId }} customization={{ texts:{ valueProp: 'smart_option'}}} />
+                      </div>
                     )
+                  )
                 ) : (
-                  <div className="animate-fade-in-up z-10 relative">
+                  // VISTA PAYPAL
+                  <div className="animate-fade-in w-full relative z-10">
+                    <p className="text-sm text-[#829AB1] mb-4">
+                      {isSubscriptionPayment ? "Suscripción internacional en USD." : "Pago seguro internacional en USD."}
+                    </p>
                     <PayPalButtons 
-                        style={{ layout: "vertical", shape: "pill" }} 
+                        key={isSubscriptionPayment ? "sub-paypal" : "one-paypal"} 
+                        style={{ layout: "vertical", shape: "rect", color: "gold", label: isSubscriptionPayment ? "subscribe" : "pay" }} 
                         createSubscription={isSubscriptionPayment ? (data, actions) => actions.subscription.create({ 'plan_id': PAYPAL_PLAN_ID }) : undefined}
                         createOrder={!isSubscriptionPayment ? (data, actions) => actions.order.create({ purchase_units: [{ amount: { value: COURSE_PRICE.toString() }, description: courseToBuy.title }] }) : undefined}
                         onApprove={handlePayPalApprove}
                     />
                   </div>
                 )}
-                <button onClick={() => setShowPaymentModal(false)} className={`w-full mt-6 text-sm font-bold ${COLORS.textMuted} hover:text-white`}>Cancelar</button>
               </div>
+
+              {/* Botón Cancelar */}
+              <button onClick={() => setShowPaymentModal(false)} className={`w-full mt-8 text-sm font-bold ${COLORS.textMuted} hover:text-white transition-colors`}>
+                Cancelar y volver
+              </button>
             </div>
+          </div>
         )}
 
         <LegalModal type={legalModalType} onClose={() => setLegalModalType(null)} />
         {showSplash && <SplashScreen finishAnimation={finishSplashAnimation} />}
         
-        {/* LA BURBUJA RECIBE LAS NOTICIAS CON LOGOS REALES */}
         <NewsBubble news={liveNews} />
 
       </div>
