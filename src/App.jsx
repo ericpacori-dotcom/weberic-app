@@ -1,7 +1,7 @@
 // src/App.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { CheckCircle, Loader, CreditCard, Globe, Bell, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Loader, CreditCard, Globe, Bell, AlertTriangle, Play, Smartphone } from 'lucide-react';
 
 // FIREBASE IMPORTS 
 import { db, auth, googleProvider } from './firebase'; 
@@ -22,7 +22,7 @@ import { ALL_NEWS as STATIC_NEWS } from './content/news_data';
 
 // --- COMPONENTES ---
 import { COLORS, COURSE_PRICE, formatCurrency } from './utils/constants'; 
-import { Button } from './components/UI';
+import { Button, Badge } from './components/UI';
 import NeuralBackground from './components/NeuralBackground';
 import Footer from './components/Footer';
 import LegalModal from './components/LegalModal';
@@ -40,32 +40,27 @@ import ToolDetailView from './views/ToolDetailView';
 // CONFIGURACIÓN DE PAGOS
 const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY; 
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID; 
+
+// URLs DE TUS FUNCIONES EN FIREBASE
 const BACKEND_URL = "https://us-central1-weberic-25da5.cloudfunctions.net/createOrder"; 
+const VERIFY_PAYPAL_URL = "https://us-central1-weberic-25da5.cloudfunctions.net/verifyPayPalEndpoint";
+
 const PAYPAL_PLAN_ID = "P-5X729325VU782483PNFDX2WY"; 
 const MP_SUBSCRIPTION_PLAN_ID = "3bac21d11f4047be91016c280dc0bb33"; 
 
-// URL DE VERIFICACIÓN SEGURA (NUEVO)
-const VERIFY_PAYPAL_URL = "https://us-central1-weberic-25da5.cloudfunctions.net/verifyPayPalEndpoint";
-
-// URL RSS
 const RSS_URL = "https://news.google.com/rss/search?q=inteligencia+artificial+tecnologia&hl=es-419&gl=PE&ceid=PE:es-419";
 const API_URL = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}`;
 
 initMercadoPago(MP_PUBLIC_KEY, { locale: 'es-PE' });
 
-// Scroll to top
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
 };
 
-// --- FUNCIÓN DE LOGOS INTELIGENTE ---
-// Convierte el nombre de la fuente en un dominio real para buscar su favicon
 const getSmartDomain = (sourceName) => {
     const lower = sourceName.toLowerCase().replace(/\s+/g, '');
-    
-    // Mapeo manual para fuentes comunes en Latam/España/Tech
     if (lower.includes('comercio')) return 'elcomercio.pe';
     if (lower.includes('republica')) return 'larepublica.pe';
     if (lower.includes('rpp')) return 'rpp.pe';
@@ -88,9 +83,6 @@ const getSmartDomain = (sourceName) => {
     if (lower.includes('andina')) return 'andina.pe';
     if (lower.includes('peru21')) return 'peru21.pe';
     if (lower.includes('gestion')) return 'gestion.pe';
-
-    // Fallback genérico: quitar espacios y acentos + .com
-    // Ej: "Nuevo Diario" -> "nuevodiario.com"
     return lower.normalize("NFD").replace(/[\u0300-\u036f]/g, "") + ".com";
 };
 
@@ -99,10 +91,10 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [finishSplashAnimation, setFinishSplashAnimation] = useState(false);
   
-  // ESTADOS GLOBALES
+  // ESTADOS
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isSubscriptionPayment, setIsSubscriptionPayment] = useState(false); 
-  const [paymentMethod, setPaymentMethod] = useState('mercadopago');
+  const [paymentMethod, setPaymentMethod] = useState('mercadopago'); // 'mercadopago' | 'paypal'
   const [courseToBuy, setCourseToBuy] = useState(null); 
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [legalModalType, setLegalModalType] = useState(null); 
@@ -116,17 +108,24 @@ export default function App() {
   const [user, setUser] = useState(null); 
   const [userData, setUserData] = useState({ purchasedCourses: [], isSubscribed: false });
 
-  // ESTADO DE NOTICIAS
   const [liveNews, setLiveNews] = useState(STATIC_NEWS); 
 
-  // SPLASH
+  // --- SOLUCIÓN CRÍTICA: MEMOIZAR OPCIONES DE PAYPAL ---
+  // Esto arregla el error de "Minified React error" (pantalla blanca)
+  const paypalOptions = useMemo(() => ({
+    "client-id": PAYPAL_CLIENT_ID, 
+    currency: "USD", 
+    intent: isSubscriptionPayment ? "subscription" : "capture",
+    vault: true
+  }), [isSubscriptionPayment]);
+
+  // EFECTOS DE CARGA
   useEffect(() => {
     const timerExit = setTimeout(() => { setFinishSplashAnimation(true); }, 2500);
     const timerRemove = setTimeout(() => { setShowSplash(false); }, 3000);
     return () => { clearTimeout(timerExit); clearTimeout(timerRemove); };
   }, []);
 
-  // DETECTOR DE PAGOS
   useEffect(() => {
     const checkPaymentStatus = async () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -135,24 +134,12 @@ export default function App() {
       
       if (user) {
         if (preapproval_id) {
-            try {
-                const userRef = doc(db, "users", user.uid);
-                await updateDoc(userRef, { 
-                    isSubscribed: true,
-                    subscriptionSource: 'mercadopago_frontend',
-                    subscriptionDate: new Date().toISOString()
-                });
-                showNotification("¡Suscripción Premium Activada!", "success");
-                window.history.replaceState({}, document.title, window.location.pathname);
-                setShowPaymentModal(false);
-            } catch (error) {
-                console.error("Error activando sub:", error);
-                // Si falla por permisos, el webhook lo activará de todos modos en backend
-                showNotification("Procesando suscripción...", "info");
-            }
+            showNotification("Procesando suscripción...", "info");
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setShowPaymentModal(false);
         }
         else if (status === 'approved') {
-            showNotification("Pago recibido. Tu curso se desbloqueará en unos segundos.", "success");
+            showNotification("Pago recibido. Tu curso se desbloqueará en breve.", "success");
             window.history.replaceState({}, document.title, window.location.pathname);
             setShowPaymentModal(false);
         }
@@ -161,7 +148,7 @@ export default function App() {
     if (!loadingCourses && user) checkPaymentStatus();
   }, [user, loadingCourses]); 
 
-  // --- CARGAR NOTICIAS (AHORA SÍ CON LOGOS REALES) ---
+  // CARGA DE DATOS
   useEffect(() => {
     const fetchNews = async () => {
       try {
@@ -172,30 +159,25 @@ export default function App() {
             const titleParts = item.title.split(' - ');
             const sourceName = titleParts.length > 1 ? titleParts.pop().trim() : "Tecnología";
             const cleanTitle = titleParts.join(' - ');
-            
-            // USAMOS LA FUNCIÓN INTELIGENTE PARA OBTENER EL DOMINIO DEL NOMBRE
             const realDomain = getSmartDomain(sourceName);
-            
             return {
               id: index,
               title: cleanTitle, 
               source: sourceName, 
               category: "IA News",
               date: item.pubDate.split(' ')[0],
-              description: "Noticia destacada. Toca para leer más en la fuente original.",
+              description: "Noticia destacada.",
               link: item.link,
-              // Google Favicon Service usando el dominio deducido
               image: `https://www.google.com/s2/favicons?domain=${realDomain}&sz=128`
             };
           });
           setLiveNews(formattedNews); 
         }
-      } catch (error) { console.error("Error cargando noticias:", error); }
+      } catch (error) { console.error("Error noticias:", error); }
     };
     fetchNews();
   }, []);
 
-  // CARGAR DATOS
   useEffect(() => {
     const fetchCourses = async () => {
       try {
@@ -239,13 +221,13 @@ export default function App() {
   const handleLogout = async () => { await signOut(auth); navigate('/'); };
   const showNotification = (msg, type = 'success') => { setNotification({ msg, type }); setTimeout(() => setNotification(null), 4000); };
 
-  // PAGOS
+  // --- APERTURA DE MODALES ---
   const initiatePayment = (course) => {
     if (!user) { showNotification("Inicia sesión primero", "error"); handleLogin(); return; }
     setCourseToBuy(course);
     setIsSubscriptionPayment(false); 
     setPreferenceId(null);
-    setPaymentMethod('mercadopago');
+    setPaymentMethod('mercadopago'); 
     setShowPaymentModal(true);
   };
 
@@ -253,41 +235,65 @@ export default function App() {
     if (!user) { showNotification("Inicia sesión para suscribirte", "error"); handleLogin(); return; }
     setIsSubscriptionPayment(true);
     setPreferenceId(null);
-    setPaymentMethod('mercadopago');
+    setPaymentMethod('mercadopago'); 
     setShowPaymentModal(true);
   };
 
+  // --- LÓGICA MERCADO PAGO ---
   const createPreference = async () => {
     setIsLoadingPayment(true);
+    
+    // 1. SUSCRIPCIÓN
     if (isSubscriptionPayment) {
         setTimeout(() => { window.location.href = `https://www.mercadopago.com.pe/subscriptions/checkout?preapproval_plan_id=${MP_SUBSCRIPTION_PLAN_ID}`; }, 1500);
         return; 
     }
+
+    // 2. PAGO ÚNICO
     try {
+      if (!courseToBuy) {
+          showNotification("Error: No hay curso seleccionado", "error");
+          setIsLoadingPayment(false);
+          return;
+      }
+
+      // Enviamos el email para que MP muestre Yape/Tarjetas correctamente
       const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: courseToBuy.id, title: courseToBuy.title, price: COURSE_PRICE, userId: user.uid }), 
+        body: JSON.stringify({ 
+            id: courseToBuy.id, 
+            title: courseToBuy.title, 
+            price: Number(COURSE_PRICE),
+            userId: user.uid,
+            email: user.email // IMPORTANTE: Email del usuario
+        }), 
       });
+      
       const data = await response.json();
-      setPreferenceId(data.id); 
-    } catch (error) { showNotification("Error conexión", "error"); } 
+      
+      if (!response.ok) throw new Error(data.error || "Error en servidor");
+      
+      if(data.id) {
+          setPreferenceId(data.id); 
+      } else {
+          showNotification("No se pudo generar el pago", "error");
+      }
+    } catch (error) { 
+        console.error(error);
+        showNotification("Error conectando con Mercado Pago", "error"); 
+    } 
     finally { setIsLoadingPayment(false); }
   };
 
-  // --- LÓGICA SEGURA DE PAYPAL (ACTUALIZADA) ---
+  // --- LÓGICA PAYPAL ---
   const handlePayPalApprove = async (data, actions) => {
     try {
-      // 1. CAPTURAR EL DINERO (Solo si es pago único)
-      // Esto asegura que el dinero salga de la cuenta del cliente antes de dar el curso
       if (!isSubscriptionPayment) {
           await actions.order.capture(); 
       }
-      
       showNotification("Verificando pago...", "info");
-
-      // 2. PEDIR AL SERVIDOR QUE VERIFIQUE Y DESBLOQUEE
-      // Enviamos los datos al backend seguro en lugar de editar la DB directamente
+      
       const response = await fetch(VERIFY_PAYPAL_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -299,26 +305,22 @@ export default function App() {
               userId: user.uid
           })
       });
-
       const result = await response.json();
-
+      
       if (result.success) {
           showNotification("¡Pago Exitoso! Curso desbloqueado.", "success");
           setShowPaymentModal(false);
-          // La interfaz se actualizará sola gracias a onSnapshot
       } else {
-          console.error(result);
-          showNotification("Hubo un problema verificando el pago.", "error");
+          showNotification("Error en verificación.", "error");
       }
-
     } catch (err) { 
         console.error("Error PayPal:", err);
-        showNotification("Error procesando compra.", "error"); 
+        showNotification("Error procesando pago.", "error"); 
     }
   };
 
   return (
-    <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "USD", intent: "subscription", vault: true }}>
+    <PayPalScriptProvider options={paypalOptions}>
       <div className={`font-sans ${COLORS.textLight} ${COLORS.bgMain} min-h-screen relative animate-fade-in`}>
         <ScrollToTop />
         <NeuralBackground />
@@ -339,35 +341,101 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
+        {/* --- MODAL DE PAGOS (INTERFAZ RESTAURADA) --- */}
         {showPaymentModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#102A43]/80 backdrop-blur-sm animate-fade-in-up">
               <div className={`${COLORS.bgCard} rounded-[2rem] shadow-2xl max-w-md w-full p-8 text-center relative border border-[#627D98] animate-pop-in max-h-[90vh] overflow-y-auto`}>
-                <h3 className={`text-3xl font-black mb-4 ${COLORS.textLight}`}>Procesando Pago</h3>
-                {paymentMethod === 'mercadopago' ? (
-                    isSubscriptionPayment ? (
-                        <Button onClick={createPreference} variant="primary" className="w-full h-14 text-lg shadow-lg">
-                            {isLoadingPayment ? <Loader className="animate-spin mx-auto"/> : "Suscribirse con Mercado Pago"}
-                        </Button>
-                    ) : (
-                        !preferenceId ? (
-                            <Button onClick={createPreference} variant="primary" className="w-full h-14 text-lg shadow-lg">
-                                {isLoadingPayment ? <Loader className="animate-spin mx-auto"/> : "Pagar Curso Único"}
-                            </Button>
-                        ) : (
-                            <div className="animate-fade-in-up"><Wallet initialization={{ preferenceId }} customization={{ texts:{ valueProp: 'smart_option'}}} /></div>
-                        )
-                    )
-                ) : (
-                  <div className="animate-fade-in-up z-10 relative">
-                    <PayPalButtons 
-                        style={{ layout: "vertical", shape: "pill" }} 
-                        createSubscription={isSubscriptionPayment ? (data, actions) => actions.subscription.create({ 'plan_id': PAYPAL_PLAN_ID }) : undefined}
-                        createOrder={!isSubscriptionPayment ? (data, actions) => actions.order.create({ purchase_units: [{ amount: { value: COURSE_PRICE.toString() }, description: courseToBuy.title }] }) : undefined}
-                        onApprove={handlePayPalApprove}
-                    />
-                  </div>
-                )}
-                <button onClick={() => setShowPaymentModal(false)} className={`w-full mt-6 text-sm font-bold ${COLORS.textMuted} hover:text-white`}>Cancelar</button>
+                
+                {/* CABECERA */}
+                <h3 className={`text-2xl font-black mb-2 ${COLORS.textLight}`}>
+                    {isSubscriptionPayment ? "Suscripción Premium" : "Desbloquear Curso"}
+                </h3>
+                <p className={`${COLORS.textMuted} mb-6 text-sm`}>
+                    {isSubscriptionPayment 
+                        ? "Accede a todo el contenido por un pago mensual." 
+                        : `Estás comprando: "${courseToBuy?.title}"`
+                    }
+                </p>
+
+                {/* PRECIO */}
+                <div className="mb-6">
+                    <span className={`text-4xl font-black ${COLORS.textLight}`}>
+                        {formatCurrency(COURSE_PRICE)}
+                    </span>
+                    <span className={`${COLORS.textMuted} text-sm font-bold ml-2`}>
+                        {isSubscriptionPayment ? "/mes" : "único"}
+                    </span>
+                </div>
+
+                {/* TABS DE SELECCIÓN (BOTONES PARA CAMBIAR DE MÉTODO) */}
+                <div className="flex bg-[#1F364D] p-1 rounded-full mb-6">
+                    <button 
+                        onClick={() => { setPaymentMethod('mercadopago'); setPreferenceId(null); }}
+                        className={`flex-1 py-2 rounded-full text-sm font-bold transition-all ${paymentMethod === 'mercadopago' ? 'bg-[#F9703E] text-white shadow-md' : 'text-[#829AB1] hover:text-white'}`}
+                    >
+                        Tarjeta / Yape
+                    </button>
+                    <button 
+                        onClick={() => { setPaymentMethod('paypal'); setPreferenceId(null); }}
+                        className={`flex-1 py-2 rounded-full text-sm font-bold transition-all ${paymentMethod === 'paypal' ? 'bg-[#0070BA] text-white shadow-md' : 'text-[#829AB1] hover:text-white'}`}
+                    >
+                        PayPal
+                    </button>
+                </div>
+
+                {/* CONTENIDO DEL MÉTODO DE PAGO */}
+                <div className="min-h-[150px] flex flex-col justify-center w-full">
+                    
+                    {/* OPCIÓN 1: MERCADO PAGO */}
+                    {paymentMethod === 'mercadopago' && (
+                        <>
+                            {isSubscriptionPayment ? (
+                                <Button onClick={createPreference} variant="primary" className="w-full h-14 text-lg shadow-lg flex items-center justify-center gap-2">
+                                    {isLoadingPayment ? <Loader className="animate-spin"/> : <> Suscribirse con Mercado Pago</>}
+                                </Button>
+                            ) : (
+                                !preferenceId ? (
+                                    <Button onClick={createPreference} variant="primary" className="w-full h-14 text-lg shadow-lg flex items-center justify-center gap-2">
+                                        {isLoadingPayment ? <Loader className="animate-spin"/> : <>Pagar con Mercado Pago</>}
+                                    </Button>
+                                ) : (
+                                    <div className="animate-fade-in-up w-full">
+                                        <Wallet initialization={{ preferenceId }} customization={{ texts:{ valueProp: 'smart_option'}}} />
+                                    </div>
+                                )
+                            )}
+                        </>
+                    )}
+
+                    {/* OPCIÓN 2: PAYPAL */}
+                    {paymentMethod === 'paypal' && (
+                      <div className="animate-fade-in-up z-10 relative w-full">
+                        <PayPalButtons 
+                            key={isSubscriptionPayment ? "sub" : "pay"} 
+                            style={{ layout: "vertical", shape: "rect", color: "blue", label: isSubscriptionPayment ? "subscribe" : "pay" }} 
+                            createSubscription={isSubscriptionPayment ? (data, actions) => actions.subscription.create({ 'plan_id': PAYPAL_PLAN_ID }) : undefined}
+                            createOrder={!isSubscriptionPayment ? (data, actions) => {
+                                return actions.order.create({
+                                    purchase_units: [{
+                                        amount: {
+                                            value: COURSE_PRICE.toFixed(2), 
+                                            currency_code: "USD"
+                                        },
+                                        description: courseToBuy?.title || "Curso WebEric"
+                                    }]
+                                });
+                            } : undefined}
+                            onApprove={handlePayPalApprove}
+                            onError={(err) => {
+                                console.error("Error PayPal:", err);
+                                showNotification("Error conectando con PayPal", "error");
+                            }}
+                        />
+                      </div>
+                    )}
+                </div>
+
+                <button onClick={() => setShowPaymentModal(false)} className={`w-full mt-6 text-sm font-bold ${COLORS.textMuted} hover:text-white transition-colors`}>Cancelar y volver</button>
               </div>
             </div>
         )}
@@ -375,7 +443,6 @@ export default function App() {
         <LegalModal type={legalModalType} onClose={() => setLegalModalType(null)} />
         {showSplash && <SplashScreen finishAnimation={finishSplashAnimation} />}
         
-        {/* LA BURBUJA RECIBE LAS NOTICIAS CON LOGOS REALES */}
         <NewsBubble news={liveNews} />
 
       </div>

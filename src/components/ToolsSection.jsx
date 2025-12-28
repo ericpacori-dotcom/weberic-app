@@ -9,60 +9,34 @@ const ToolsSection = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('Todas');
   
-  // Refs para el scroll visual
   const sliderRef = useRef(null);
   const isDown = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
 
-  // 1. CLASIFICACIÓN PRECISA (MAPEO EXACTO DE TUS DATOS)
-  // Aquí están las 32 categorías exactas de tu archivo tools_data.js agrupadas lógicamente.
   const GROUP_CONFIG = useMemo(() => ({
-    "Chat & Asistentes": [
-        "Chatbots", "Búsqueda", "Productividad", "Agentes", "Detección", "Escritura"
-    ],
-    "Imagen & Diseño": [
-        "Imágenes", "Edición", "Diseño", "3D"
-    ],
-    "Video & Animación": [
-        "Video", "VFX"
-    ],
-    "Audio & Voz": [
-        "Audio", "Música", "Reuniones"
-    ],
-    "Programación & Data": [
-        "Código", "Desarrollo", "Web", "Data", "Automatización"
-    ],
-    "Empresa & Marketing": [
-        "Marketing", "Ventas", "Presentaciones", "Atención", "RRHH", "Legal"
-    ],
-    "Ciencia & Ocio": [
-        "Investigación", "Comunidad", "Entretenimiento", "Juegos", "Utilidad", "Directorio"
-    ]
+    "Chat & Asistentes": ["Chatbots", "Búsqueda", "Productividad", "Agentes", "Detección", "Escritura"],
+    "Imagen & Diseño": ["Imágenes", "Edición", "Diseño", "3D"],
+    "Video & Animación": ["Video", "VFX"],
+    "Audio & Voz": ["Audio", "Música", "Reuniones"],
+    "Programación & Data": ["Código", "Desarrollo", "Web", "Data", "Automatización"],
+    "Empresa & Marketing": ["Marketing", "Ventas", "Presentaciones", "Atención", "RRHH", "Legal"],
+    "Ciencia & Ocio": ["Investigación", "Comunidad", "Entretenimiento", "Juegos", "Utilidad", "Directorio"]
   }), []);
 
-  // Generamos la lista de botones para el menú
   const menuCategories = ['Todas', ...Object.keys(GROUP_CONFIG)];
 
-  // 2. LÓGICA DE FILTRADO (BLINDADA)
   const filteredTools = useMemo(() => {
-    // A) Si es "Todas", mostramos todo ordenado por popularidad
     if (activeCategory === 'Todas') {
       return [...AI_TOOLS_DATA].sort((a, b) => b.popularity - a.popularity);
     }
-
-    // B) Si es un grupo, obtenemos las categorías permitidas
     const allowedCategories = GROUP_CONFIG[activeCategory] || [];
-
-    // C) Filtramos: La herramienta SOLO pasa si su categoría exacta está en la lista
     return AI_TOOLS_DATA.filter(tool => {
         const toolCat = tool.category ? tool.category.trim() : 'Otros';
         return allowedCategories.includes(toolCat);
     }).sort((a, b) => b.popularity - a.popularity);
-
   }, [activeCategory, GROUP_CONFIG]);
 
-  // --- MANEJADORES DE SCROLL (Mouse Drag) ---
   const handleMouseDown = (e) => {
     isDown.current = true;
     startX.current = e.pageX - sliderRef.current.offsetLeft;
@@ -81,8 +55,6 @@ const ToolsSection = () => {
   return (
     <div className="relative py-12 px-4 md:px-6 z-10 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        
-        {/* ENCABEZADO */}
         <div className="text-center mb-10 animate-fade-in-up">
           <span className={`inline-block py-1 px-3 rounded-full ${COLORS.bgCard} border border-[#627D98] text-[10px] font-bold text-[#BCCCDC] tracking-widest mb-4`}>
             <Zap size={10} className="inline mr-1 text-[#F9703E]" /> {AI_TOOLS_DATA.length}+ HERRAMIENTAS
@@ -95,7 +67,6 @@ const ToolsSection = () => {
           </p>
         </div>
 
-        {/* BARRA DE CATEGORÍAS */}
         <div className="sticky top-20 z-30 bg-[#102A43]/95 backdrop-blur-md py-4 -mx-4 px-4 md:mx-0 md:px-0 mb-8 border-b border-[#486581]/50">
           <div 
             ref={sliderRef}
@@ -119,26 +90,22 @@ const ToolsSection = () => {
                </button>
              ))}
           </div>
-          
           <p className="text-center text-[10px] text-[#BCCCDC] font-bold mt-2 uppercase tracking-widest animate-pulse">
             Mostrando {filteredTools.length} herramientas en {activeCategory}
           </p>
         </div>
 
-        {/* GRID DE HERRAMIENTAS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-fade-in-up">
-          {filteredTools.map((tool) => (
+          {filteredTools.map((tool, index) => (
             <div 
-              key={tool.id}
+              // CORRECCIÓN AQUÍ: Usamos index para garantizar unicidad
+              key={`${tool.id}-${index}`}
               onClick={() => navigate(`/herramienta/${tool.id}`)}
               className={`${COLORS.bgCard} p-5 rounded-3xl border border-[#486581] hover:border-[#F9703E] group transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl flex flex-col relative overflow-hidden cursor-pointer h-full`}
             >
-              {/* Icono de flecha */}
               <div className={`absolute top-4 right-4 text-[#486581] group-hover:text-[#F9703E] transition-colors`}>
                   <ChevronRight size={18} />
               </div>
-
-              {/* Info Principal */}
               <div className="flex items-center gap-3 mb-4 pr-6">
                  <div className="w-12 h-12 rounded-xl bg-white p-1.5 border border-[#627D98] flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform shadow-sm overflow-hidden">
                     <img 
@@ -159,18 +126,14 @@ const ToolsSection = () => {
                     </div>
                  </div>
               </div>
-              
-              {/* Tag Categoría */}
               <div className="mb-3">
                 <span className={`inline-flex items-center gap-1 py-0.5 px-2 rounded-md bg-[#334E68] text-[#F9703E] text-[9px] font-bold uppercase tracking-wider`}>
                    <Tag size={8} /> {tool.category}
                 </span>
               </div>
-
               <p className={`${COLORS.textMuted} text-xs leading-relaxed line-clamp-3 mb-4 flex-grow`}>
                  {tool.description}
               </p>
-              
               <div className="pt-3 border-t border-[#486581] flex justify-between items-center text-[10px] font-bold text-[#F9703E] opacity-60 group-hover:opacity-100 transition-opacity">
                  <span>VER DETALLES</span>
                  <ExternalLink size={10}/>
@@ -179,7 +142,6 @@ const ToolsSection = () => {
           ))}
         </div>
         
-        {/* ESTADO VACÍO */}
         {filteredTools.length === 0 && (
           <div className="text-center py-20 animate-fade-in">
             <p className="text-xl font-bold text-[#BCCCDC] mb-4">No se encontraron herramientas en este grupo.</p>
@@ -191,7 +153,6 @@ const ToolsSection = () => {
             </button>
           </div>
         )}
-
       </div>
     </div>
   );

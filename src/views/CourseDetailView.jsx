@@ -2,148 +2,216 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  ChevronRight, Sparkles, CalendarCheck, BookOpen, PenTool, ChevronDown, CheckCircle, Video, AlertTriangle
+  Play, Clock, Award, CheckCircle, Lock, AlertTriangle, 
+  ChevronDown, ChevronUp, Star, Share2, ShieldCheck, ArrowLeft 
 } from 'lucide-react';
-import Navbar from '../components/Navbar';
-import { Badge, Button } from '../components/UI'; // Asegúrate de importar Button
 import { COLORS, formatCurrency, COURSE_PRICE } from '../utils/constants';
+import { Button, Badge } from '../components/UI';
 
 const CourseDetailView = ({ courses, user, handleLogin, handlePayment, handleLogout, userData, openRefundModal }) => {
+  // 1. TODOS LOS HOOKS PRIMERO (SIEMPRE ARRIBA)
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('video');
-  const [expandedWeek, setExpandedWeek] = useState(null);
+  const [activeModule, setActiveModule] = useState(0);
+  const [showShareTooltip, setShowShareTooltip] = useState(false);
 
-  // Buscar el curso basado en el ID de la URL
-  const selectedCourse = courses.find(c => c.id === courseId);
+  // 2. BUSCAMOS EL CURSO
+  const course = courses.find(c => c.id === courseId);
 
-  // Redirigir si no existe
+  // 3. DETERMINAMOS SI EL USUARIO TIENE ACCESO
+  const hasAccess = userData?.isSubscribed || userData?.purchasedCourses?.includes(courseId);
+
+  // 4. SCROLL TO TOP AL CARGAR (HOOK)
   useEffect(() => {
-    if (!selectedCourse && courses.length > 0) {
-       navigate('/');
-    }
-  }, [selectedCourse, courses, navigate]);
+    window.scrollTo(0, 0);
+  }, [courseId]);
 
-  if (!selectedCourse) return <div className="min-h-screen flex items-center justify-center text-white">Cargando curso...</div>;
+  // 5. AHORA SÍ, VALIDAMOS SI EXISTE EL CURSO (DESPUÉS DE LOS HOOKS)
+  if (!course) {
+    return (
+      <div className={`min-h-screen ${COLORS.bgMain} flex flex-col items-center justify-center p-4`}>
+        <AlertTriangle size={48} className="text-[#F9703E] mb-4" />
+        <h2 className={`text-2xl font-bold ${COLORS.textLight}`}>Curso no encontrado</h2>
+        <Button onClick={() => navigate('/')} variant="secondary" className="mt-4">
+          Volver al inicio
+        </Button>
+      </div>
+    );
+  }
 
-  const isRich = selectedCourse.isRichContent;
-  const isOwned = userData?.purchasedCourses?.includes(selectedCourse.id) || userData?.isSubscribed;
-
-  // Ajustar tab inicial si es rico
-  useEffect(() => {
-    if (isRich) setActiveTab('plan');
-  }, [isRich]);
+  // LÓGICA DE LA VISTA
+  const progress = 0; // Aquí podrías conectar con el progreso real si lo tuvieras
 
   return (
-    <div className={`min-h-screen pb-20 font-sans ${COLORS.textLight} animate-fade-in-up overflow-x-hidden relative z-10`}>
-      <Navbar user={user} userData={userData} handleLogin={handleLogin} handleLogout={handleLogout} />
-      
-      <div className={`relative pt-20 pb-36 px-6 border-b border-[#486581] z-10 bg-[#334E68]/80 backdrop-blur-sm`}>
-        <div className="max-w-5xl mx-auto text-center relative z-10 animate-fade-in-up">
-          <button onClick={() => navigate(-1)} className={`group flex items-center ${COLORS.textMuted} hover:text-white font-bold ${COLORS.bgCard} px-5 py-2.5 rounded-full mb-8 mx-auto transition-all border border-[#627D98] hover:border-[#F9703E] hover:-translate-x-1`}><ChevronRight size={18} className="mr-2 rotate-180" /> Volver</button>
-          
-          <div className="flex flex-wrap gap-3 mb-6 justify-center">
-            <Badge color="light">{selectedCourse.category}</Badge>
-            {isRich && <Badge color="orange"><Sparkles size={12} className="mr-1 inline-block animate-spin-slow"/> PREMIUM</Badge>}
+    <div className={`min-h-screen ${COLORS.bgMain} pb-20`}>
+      {/* HEADER CON IMAGEN DE FONDO */}
+      <div className="relative h-[40vh] md:h-[50vh] overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#102A43] via-[#102A43]/80 to-transparent z-10" />
+        <img 
+          src={course.image} 
+          alt={course.title} 
+          className="w-full h-full object-cover"
+        />
+        
+        {/* BARRA SUPERIOR */}
+        <div className="absolute top-0 left-0 right-0 z-20 p-4 flex justify-between items-center">
+            <button onClick={() => navigate('/')} className="p-2 bg-black/30 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all">
+                <ArrowLeft size={24} />
+            </button>
+            <div className="flex gap-2">
+                {user ? (
+                   <div className="flex items-center gap-2" onClick={handleLogout}>
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#F9703E] to-[#FF4D4D] flex items-center justify-center text-xs font-bold text-white border-2 border-white/20">
+                          {user.email[0].toUpperCase()}
+                      </div>
+                   </div>
+                ) : (
+                   <Button onClick={handleLogin} variant="secondary" className="text-xs px-3 py-1.5 h-auto">Login</Button>
+                )}
+            </div>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 z-20 p-6 md:p-12 max-w-7xl mx-auto">
+          <Badge className="mb-4 bg-[#F9703E] text-white border-none shadow-lg shadow-[#F9703E]/20">
+             {course.category || "Curso Premium"}
+          </Badge>
+          <h1 className="text-3xl md:text-5xl font-black text-white mb-4 leading-tight">
+            {course.title}
+          </h1>
+          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-300 font-medium">
+             <div className="flex items-center gap-1"><Clock size={16} className="text-[#F9703E]"/> {course.duration || "4h 30m"}</div>
+             <div className="flex items-center gap-1"><Star size={16} className="text-yellow-400 fill-yellow-400"/> 4.9 (520 reseñas)</div>
+             <div className="flex items-center gap-1"><ShieldCheck size={16} className="text-green-400"/> Garantía de 7 días</div>
           </div>
-          <h1 className={`text-4xl md:text-6xl font-black mb-6 tracking-tight ${COLORS.textLight} leading-tight drop-shadow-xl`}>{selectedCourse.title}</h1>
-          <p className={`${COLORS.textMuted} text-lg max-w-3xl mx-auto font-medium opacity-90 leading-relaxed`}>{selectedCourse.longDescription || selectedCourse.description}</p>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 -mt-24 relative z-20 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-        <div className={`${COLORS.bgCard} rounded-[3rem] border border-[#627D98] shadow-2xl overflow-hidden min-h-[600px] p-2 bg-opacity-95 backdrop-blur-xl`}>
-          
-          {/* TAB BAR - SOLO SI LO TIENE COMPRADO O ES UN CURSO RICO */}
-          {isOwned && (
-            <div className={`flex flex-wrap justify-center gap-2 p-3 ${COLORS.bgMain} rounded-[2.5rem] mb-6 mx-2 mt-2 border border-[#486581]`}>
-                {isRich ? (
-                  <>
-                    {['plan', 'syllabus', 'tools'].map((tab) => (
-                      <button key={tab} onClick={() => setActiveTab(tab)} className={`py-3 px-8 rounded-full text-sm font-bold flex gap-2 items-center transition-all duration-300 ${activeTab === tab ? `${COLORS.accentOrange} text-white shadow-md scale-105` : `${COLORS.textMuted} hover:text-white hover:bg-[#486581]`}`}>
-                        {tab === 'plan' && <CalendarCheck size={18}/>}
-                        {tab === 'syllabus' && <BookOpen size={18}/>}
-                        {tab === 'tools' && <PenTool size={18}/>}
-                        {tab === 'plan' ? 'Plan' : tab === 'syllabus' ? 'Temario' : 'Herramientas'}
-                      </button>
-                    ))}
-                  </>
-                ) : (
-                  <button className={`py-3 px-8 rounded-full font-bold ${COLORS.accentOrange} text-white shadow-md`}>Video Clase</button>
-                )}
-            </div>
-          )}
-
-          <div className="p-8 md:p-12 h-full">
-            {isOwned ? (
-                <>
-                    {activeTab === 'plan' && isRich && (
-                    <div className="space-y-5 max-w-3xl mx-auto">
-                        {selectedCourse.actionPlan.map((week, index) => (
-                        <div key={week.week} className={`group ${COLORS.bgMain} border ${expandedWeek === week.week ? 'border-[#F9703E] shadow-md' : 'border-[#486581]'} rounded-2xl overflow-hidden transition-all duration-300 animate-fade-in-up`} style={{animationDelay: `${index * 0.1}s`}}>
-                            <div onClick={() => setExpandedWeek(expandedWeek === week.week ? null : week.week)} className={`p-6 flex items-center justify-between cursor-pointer hover:bg-[#486581]/50 transition-colors`}>
-                            <div className="flex items-center gap-6">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl transition-all ${expandedWeek === week.week ? `${COLORS.accentOrange} text-white rotate-3 scale-110` : `${COLORS.bgCard} ${COLORS.textMuted} border border-[#627D98]`}`}>{week.week}</div>
-                                <div><p className={`text-[10px] ${COLORS.textOrange} uppercase font-bold tracking-widest mb-1`}>Semana {week.week}</p><h4 className={`font-bold ${COLORS.textLight} text-lg`}>{week.title}</h4></div>
-                            </div>
-                            <ChevronDown size={24} className={`${COLORS.textMuted} transition-transform duration-300 ${expandedWeek === week.week ? `rotate-180 ${COLORS.textOrange}` : ''}`}/>
-                            </div>
-                            {expandedWeek === week.week && <div className={`px-6 pb-8 pt-2 border-t border-[#486581] animate-fade-in-up`}><ul className="space-y-4">{week.tasks.map((task, i) => <li key={i} className={`flex items-start gap-4 ${COLORS.textLight} text-sm font-medium`}><CheckCircle size={20} className={`${COLORS.textOrange} flex-shrink-0 mt-0.5`} /><span>{task}</span></li>)}</ul></div>}
-                        </div>
-                        ))}
-                    </div>
-                    )}
-                    {activeTab === 'syllabus' && isRich && (
-                    <div className="space-y-8 max-w-3xl mx-auto">
-                        {selectedCourse.syllabus.map((mod, i) => (
-                        <div key={i} className={`${COLORS.bgMain} p-8 rounded-[2rem] border border-[#486581] shadow-lg hover:border-[#627D98] transition-all animate-fade-in-up`} style={{animationDelay: `${i * 0.1}s`}}>
-                            <h3 className={`font-bold text-xl ${COLORS.textLight} mb-6 flex items-center gap-4`}><span className={`${COLORS.accentOrange} text-white w-10 h-10 rounded-xl flex items-center justify-center text-base font-black shadow-sm`}>{i+1}</span>{mod.title}</h3>
-                            <div className={`space-y-6 pl-5 border-l-2 border-[#627D98] ml-5`}>{mod.content.map((item, j) => (<div key={j} className="relative pl-6"><div className={`absolute left-[-0.4rem] top-1.5 w-3 h-3 rounded-full ${COLORS.accentOrange}`}></div><h5 className={`font-bold ${COLORS.textLight} text-lg mb-2`}>{item.subtitle}</h5><p className={`${COLORS.textMuted} leading-relaxed text-sm ${COLORS.bgCard} p-4 rounded-xl border border-[#486581]`}>{item.text}</p></div>))}</div>
-                        </div>
-                        ))}
-                    </div>
-                    )}
-                    {activeTab === 'tools' && isRich && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                        {selectedCourse.tools.map((tool, i) => (
-                        <a key={i} href={tool.link} target="_blank" rel="noopener noreferrer" className={`${COLORS.bgMain} p-6 rounded-2xl border border-[#486581] hover:border-[#F9703E] transition-all duration-300 group flex items-start gap-5 hover:-translate-y-2 shadow-md hover:shadow-2xl animate-fade-in-up`} style={{animationDelay: `${i * 0.1}s`}}>
-                            <div className={`${COLORS.bgCard} p-4 rounded-xl group-hover:${COLORS.accentOrange} transition-colors border border-[#627D98] duration-300`}><PenTool size={24} className={`${COLORS.textMuted} group-hover:text-white transition-colors`}/></div>
-                            <div><h4 className={`font-bold ${COLORS.textLight} text-lg flex items-center gap-2 mb-2 group-hover:${COLORS.textOrange} transition-colors`}>{tool.name}</h4><p className={`${COLORS.textMuted} text-sm`}>{tool.desc}</p></div>
-                        </a>
-                        ))}
-                    </div>
-                    )}
-                    {(!isRich || activeTab === 'video') && <div className="flex flex-col items-center justify-center text-center h-full py-24 animate-fade-in-up"><div className={`${COLORS.bgMain} p-10 rounded-full mb-8 text-[#627D98] border border-[#486581] animate-float`}><Video size={60}/></div><h3 className={`font-bold text-2xl ${COLORS.textLight} mb-3`}>Video Introductorio</h3><p className={COLORS.textMuted}>Contenido disponible.</p></div>}
-                </>
-            ) : (
-                // ESTADO BLOQUEADO - MUESTRA CTA DE PAGO
-                <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in-up">
-                    <div className="bg-[#334E68] p-8 rounded-full mb-6 relative">
-                        <div className="absolute inset-0 bg-[#F9703E] rounded-full blur-xl opacity-20 animate-pulse"></div>
-                        <Sparkles size={64} className="text-[#F9703E] relative z-10" />
-                    </div>
-                    <h2 className="text-3xl font-black text-white mb-4">Este contenido es exclusivo</h2>
-                    <p className="text-[#BCCCDC] max-w-lg mb-8 text-lg">
-                        Desbloquea este curso completo y empieza a monetizar con las herramientas de IA hoy mismo.
+      <div className="max-w-7xl mx-auto px-4 md:px-6 -mt-8 relative z-30">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* COLUMNA IZQUIERDA: CONTENIDO */}
+            <div className="lg:col-span-2 space-y-8">
+                
+                {/* DESCRIPCIÓN */}
+                <div className={`${COLORS.bgCard} p-6 rounded-3xl border border-[#486581]/30 shadow-xl`}>
+                    <h3 className={`text-xl font-bold ${COLORS.textLight} mb-4 flex items-center gap-2`}>
+                        <Award className="text-[#F9703E]" /> Lo que aprenderás
+                    </h3>
+                    <p className={`${COLORS.textMuted} leading-relaxed`}>
+                        {course.description}
+                        <br/><br/>
+                        Domina las herramientas más avanzadas de IA para potenciar tu productividad y creatividad. Este curso está diseñado para llevarte de cero a experto en tiempo récord.
                     </p>
-                    <Button onClick={() => handlePayment(selectedCourse)} variant="primary" className="text-xl px-12 py-4 shadow-2xl hover:scale-105 transform transition-all">
-                        Desbloquear por {formatCurrency(COURSE_PRICE)}
-                    </Button>
                 </div>
-            )}
-          </div>
-          
-          {isOwned && (
-            <div className="flex justify-center mt-12 mb-4 animate-fade-in-up">
-              <button onClick={openRefundModal} className="flex items-center gap-2 text-sm font-bold text-[#BCCCDC] hover:text-[#EF4444] transition-colors opacity-70 hover:opacity-100">
-                <AlertTriangle size={16} /> ¿Problemas con el curso? Solicitar Reembolso
-              </button>
+
+                {/* TEMARIO / MÓDULOS */}
+                <div className="space-y-4">
+                    <h3 className={`text-xl font-bold ${COLORS.textLight} px-2`}>Contenido del Curso</h3>
+                    {course.modules?.map((module, index) => (
+                        <div key={index} className={`${COLORS.bgCard} rounded-2xl border border-[#486581]/30 overflow-hidden`}>
+                            <button 
+                                onClick={() => setActiveModule(activeModule === index ? -1 : index)}
+                                className="w-full p-4 flex items-center justify-between hover:bg-[#1F364D] transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${activeModule === index ? 'bg-[#F9703E] text-white' : 'bg-[#334E68] text-[#BCCCDC]'}`}>
+                                        {index + 1}
+                                    </div>
+                                    <span className={`font-bold ${COLORS.textLight}`}>{module.title}</span>
+                                </div>
+                                {activeModule === index ? <ChevronUp size={20} className={COLORS.textMuted}/> : <ChevronDown size={20} className={COLORS.textMuted}/>}
+                            </button>
+                            
+                            {activeModule === index && (
+                                <div className="bg-[#102A43]/50 p-4 space-y-2 border-t border-[#486581]/30">
+                                    {module.lessons?.map((lesson, lIndex) => (
+                                        <div key={lIndex} className="flex items-center justify-between p-3 rounded-xl hover:bg-[#1F364D] group cursor-pointer transition-all">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-full ${hasAccess ? 'bg-[#00D97E]/10 text-[#00D97E]' : 'bg-[#334E68]/30 text-[#829AB1]'}`}>
+                                                    {hasAccess ? <Play size={14} fill="currentColor" /> : <Lock size={14} />}
+                                                </div>
+                                                <span className={`${hasAccess ? 'text-white' : COLORS.textMuted} text-sm font-medium`}>
+                                                    {lesson}
+                                                </span>
+                                            </div>
+                                            <span className="text-xs text-[#829AB1] font-bold">10:00</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
             </div>
-          )}
+
+            {/* COLUMNA DERECHA: TARJETA DE COMPRA */}
+            <div className="lg:col-span-1">
+                <div className={`sticky top-24 ${COLORS.bgCard} p-6 rounded-3xl border border-[#486581]/50 shadow-2xl relative overflow-hidden`}>
+                    {/* Efecto de brillo */}
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#F9703E]/20 blur-3xl rounded-full pointer-events-none"></div>
+
+                    {hasAccess ? (
+                        <div className="text-center space-y-6">
+                            <div className="w-20 h-20 mx-auto bg-[#00D97E]/10 rounded-full flex items-center justify-center mb-4 border border-[#00D97E]/30">
+                                <CheckCircle size={40} className="text-[#00D97E]" />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-black text-white mb-2">¡Ya tienes acceso!</h3>
+                                <p className={COLORS.textMuted}>Disfruta de tu aprendizaje sin límites.</p>
+                            </div>
+                            <Button className="w-full py-4 text-lg shadow-[#00D97E]/20 shadow-lg border border-[#00D97E]/50 text-[#00D97E] hover:bg-[#00D97E] hover:text-[#102A43]">
+                                Continuar Aprendiendo
+                            </Button>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="mb-6">
+                                <span className="text-[#BCCCDC] text-sm font-bold uppercase tracking-widest">Precio Total</span>
+                                <div className="flex items-end gap-2 mt-1">
+                                    <span className="text-4xl font-black text-white">{formatCurrency(COURSE_PRICE)}</span>
+                                    <span className="text-[#829AB1] line-through font-bold mb-1 text-lg">$99.99</span>
+                                </div>
+                                <div className="mt-2 inline-flex items-center gap-1 bg-[#F9703E]/10 text-[#F9703E] px-2 py-1 rounded-md text-xs font-bold border border-[#F9703E]/30">
+                                    <ZapIcon size={12} /> 80% DE DESCUENTO
+                                </div>
+                            </div>
+
+                            <div className="space-y-3 mb-8">
+                                <Button onClick={() => handlePayment(course)} variant="primary" className="w-full py-4 text-lg shadow-xl shadow-[#F9703E]/20 group relative overflow-hidden">
+                                    <span className="relative z-10 flex items-center justify-center gap-2">
+                                        Desbloquear Curso <ArrowRightIcon className="group-hover:translate-x-1 transition-transform" />
+                                    </span>
+                                </Button>
+                                <p className="text-center text-xs text-[#829AB1]">Pago único • Acceso de por vida</p>
+                            </div>
+
+                            <div className="border-t border-[#486581]/30 pt-6 space-y-4">
+                                <div className="flex items-center gap-3 text-sm text-[#BCCCDC]">
+                                    <CheckCircle size={16} className="text-[#00D97E]" /> Acceso inmediato al contenido
+                                </div>
+                                <div className="flex items-center gap-3 text-sm text-[#BCCCDC]">
+                                    <CheckCircle size={16} className="text-[#00D97E]" /> Certificado de finalización
+                                </div>
+                                <div className="flex items-center gap-3 text-sm text-[#BCCCDC]">
+                                    <CheckCircle size={16} className="text-[#00D97E]" /> Soporte prioritario
+                                </div>
+                            </div>
+                            
+                            <button onClick={openRefundModal} className="w-full mt-6 text-xs text-[#829AB1] hover:text-white underline text-center">
+                                Política de reembolso de 30 días
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
         </div>
       </div>
     </div>
   );
 };
+
+// Iconos auxiliares simples para evitar errores de importación si faltan en lucide
+const ZapIcon = ({className, size}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>;
+const ArrowRightIcon = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>;
 
 export default CourseDetailView;
