@@ -44,6 +44,9 @@ const BACKEND_URL = "https://us-central1-weberic-25da5.cloudfunctions.net/create
 const PAYPAL_PLAN_ID = "P-5X729325VU782483PNFDX2WY"; 
 const MP_SUBSCRIPTION_PLAN_ID = "3bac21d11f4047be91016c280dc0bb33"; 
 
+// URL DE VERIFICACIÓN SEGURA (NUEVO)
+const VERIFY_PAYPAL_URL = "https://us-central1-weberic-25da5.cloudfunctions.net/verifyPayPalEndpoint";
+
 // URL RSS
 const RSS_URL = "https://news.google.com/rss/search?q=inteligencia+artificial+tecnologia&hl=es-419&gl=PE&ceid=PE:es-419";
 const API_URL = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}`;
@@ -144,7 +147,8 @@ export default function App() {
                 setShowPaymentModal(false);
             } catch (error) {
                 console.error("Error activando sub:", error);
-                showNotification("Contacta a soporte para activar tu cuenta.", "error");
+                // Si falla por permisos, el webhook lo activará de todos modos en backend
+                showNotification("Procesando suscripción...", "info");
             }
         }
         else if (status === 'approved') {
@@ -271,17 +275,46 @@ export default function App() {
     finally { setIsLoadingPayment(false); }
   };
 
+  // --- LÓGICA SEGURA DE PAYPAL (ACTUALIZADA) ---
   const handlePayPalApprove = async (data, actions) => {
     try {
-      const userRef = doc(db, "users", user.uid);
-      if (isSubscriptionPayment) { 
-          await updateDoc(userRef, { isSubscribed: true, subscriptionStartDate: new Date().toISOString(), subscriptionProvider: 'paypal', subscriptionId: data.subscriptionID }); 
-      } else { 
-          await updateDoc(userRef, { purchasedCourses: arrayUnion(courseToBuy.id) }); 
+      // 1. CAPTURAR EL DINERO (Solo si es pago único)
+      // Esto asegura que el dinero salga de la cuenta del cliente antes de dar el curso
+      if (!isSubscriptionPayment) {
+          await actions.order.capture(); 
       }
-      showNotification("¡Pago Exitoso con PayPal!", "success");
-      setShowPaymentModal(false);
-    } catch (err) { showNotification("Error guardando compra", "error"); }
+      
+      showNotification("Verificando pago...", "info");
+
+      // 2. PEDIR AL SERVIDOR QUE VERIFIQUE Y DESBLOQUEE
+      // Enviamos los datos al backend seguro en lugar de editar la DB directamente
+      const response = await fetch(VERIFY_PAYPAL_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              orderID: data.orderID,
+              subscriptionID: data.subscriptionID,
+              isSubscription: isSubscriptionPayment,
+              courseId: courseToBuy?.id,
+              userId: user.uid
+          })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+          showNotification("¡Pago Exitoso! Curso desbloqueado.", "success");
+          setShowPaymentModal(false);
+          // La interfaz se actualizará sola gracias a onSnapshot
+      } else {
+          console.error(result);
+          showNotification("Hubo un problema verificando el pago.", "error");
+      }
+
+    } catch (err) { 
+        console.error("Error PayPal:", err);
+        showNotification("Error procesando compra.", "error"); 
+    }
   };
 
   return (
