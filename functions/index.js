@@ -6,7 +6,7 @@ import { MercadoPagoConfig, Preference, Payment } from "mercadopago";
 import express from "express";
 import cors from "cors";
 
-// Rutas de suscripción
+// Rutas de suscripción (Asegúrate de que el archivo exista en functions/routes/)
 import paymentRoutes from "./routes/payment.routes.js"; 
 
 admin.initializeApp();
@@ -54,7 +54,7 @@ export const api = onRequest(app);
 
 
 // ==========================================
-//  2. FUNCIONES DE PAGO ÚNICO (CORREGIDA)
+//  2. FUNCIONES DE PAGO ÚNICO
 // ==========================================
 
 export const createOrder = onRequest({ cors: true }, async (req, res) => {
@@ -69,9 +69,11 @@ export const createOrder = onRequest({ cors: true }, async (req, res) => {
 
         const result = await preference.create({
             body: {
-                // --- CAMBIO IMPORTANTE AQUÍ ---
-                // Eliminamos 'payer' para que MP no reconozca al usuario y permita pago como invitado.
-                // payer: { email: email || "user@test.com" }, 
+                // 1. ELIMINAMOS 'payer' (Ya estaba comentado, perfecto)
+                // payer: { email: email }, 
+
+                // 2. AGREGAMOS ESTO: BINARY MODE (Clave para pagos como invitado)
+                binary_mode: true, 
                 
                 items: [{
                     id: courseIdParam,
@@ -80,7 +82,6 @@ export const createOrder = onRequest({ cors: true }, async (req, res) => {
                     quantity: 1,
                     currency_id: "PEN" 
                 }],
-                // Seguimos enviando metadata para saber a quién desbloquear el curso
                 metadata: { user_id: userId, course_id: courseIdParam },
                 back_urls: {
                     success: `${DOMAIN}/?status=approved`,
