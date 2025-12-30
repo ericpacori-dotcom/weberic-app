@@ -1,13 +1,11 @@
 // src/App.jsx
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { CheckCircle, Loader, CreditCard, Globe, Bell, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Loader, CreditCard, Globe, Bell, AlertTriangle, Calendar, Star } from 'lucide-react';
 
 // FIREBASE IMPORTS 
 import { db, auth, googleProvider } from './firebase'; 
-import { 
-  collection, getDocs, doc, setDoc, updateDoc, onSnapshot, arrayUnion
-} from 'firebase/firestore'; 
+import { doc, setDoc, updateDoc, onSnapshot, getDocs, collection } from 'firebase/firestore'; 
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 
 // MERCADO PAGO IMPORT
@@ -16,15 +14,12 @@ import { initMercadoPago, Wallet } from '@mercadopago/sdk-react';
 // PAYPAL IMPORT
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
-// --- DATOS --- 
+// --- DATOS & COMPONENTES --- 
 import { ALL_COURSES } from './content/courses_data'; 
 import { ALL_NEWS as STATIC_NEWS } from './content/news_data'; 
-
-// --- COMPONENTES ---
-import { COLORS, COURSE_PRICE, formatCurrency } from './utils/constants'; 
+import { COLORS, PLAN_MONTHLY_PRICE, PLAN_YEARLY_PRICE, formatCurrency } from './utils/constants'; 
 import { Button } from './components/UI';
 import NeuralBackground from './components/NeuralBackground';
-import Footer from './components/Footer';
 import LegalModal from './components/LegalModal';
 import SplashScreen from './components/SplashScreen'; 
 import NewsBubble from './components/NewsBubble'; 
@@ -41,24 +36,21 @@ import ToolDetailView from './views/ToolDetailView';
 const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY; 
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID; 
 
-// URLs DEL BACKEND (CLOUD FUNCTIONS)
-// Asegúrate de que esta URL coincida con la de tu proyecto en Firebase
-const CREATE_ORDER_URL = "https://us-central1-weberic-25da5.cloudfunctions.net/createOrder"; 
+// URLs DEL BACKEND
 const VERIFY_PAYPAL_URL = "https://us-central1-weberic-25da5.cloudfunctions.net/verifyPayPalEndpoint";
 
-const PAYPAL_PLAN_ID = "P-5X729325VU782483PNFDX2WY"; 
-const MP_SUBSCRIPTION_PLAN_ID = "3bac21d11f4047be91016c280dc0bb33"; 
+// --- IDs DE PLANES DE PAYPAL ---
+// ID Mensual (Asegúrate que este también sea el correcto de tu panel, o usa el que tenías)
+const PAYPAL_PLAN_MONTHLY_ID = "P-5X729325VU782483PNFDX2WY"; 
+
+// ID Anual (EL QUE ACABAS DE DARME)
+const PAYPAL_PLAN_YEARLY_ID = "P-04Y821593A494293XNFJVYAA"; 
 
 // URL RSS NOTICIAS
 const RSS_URL = "https://news.google.com/rss/search?q=inteligencia+artificial+tecnologia&hl=es-419&gl=PE&ceid=PE:es-419";
 const API_URL = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}`;
 
-// Inicializar Mercado Pago
-if (MP_PUBLIC_KEY) {
-  initMercadoPago(MP_PUBLIC_KEY, { locale: 'es-PE' });
-} else {
-  console.warn("⚠️ Falta VITE_MP_PUBLIC_KEY en .env");
-}
+if (MP_PUBLIC_KEY) initMercadoPago(MP_PUBLIC_KEY, { locale: 'es-PE' });
 
 // Scroll to top
 const ScrollToTop = () => {
@@ -67,31 +59,11 @@ const ScrollToTop = () => {
   return null;
 };
 
-// --- FUNCIÓN DE LOGOS INTELIGENTE ---
+// Función helper para dominios de noticias
 const getSmartDomain = (sourceName) => {
     const lower = sourceName.toLowerCase().replace(/\s+/g, '');
     if (lower.includes('comercio')) return 'elcomercio.pe';
     if (lower.includes('republica')) return 'larepublica.pe';
-    if (lower.includes('rpp')) return 'rpp.pe';
-    if (lower.includes('xataka')) return 'xataka.com';
-    if (lower.includes('genbeta')) return 'genbeta.com';
-    if (lower.includes('applesfera')) return 'applesfera.com';
-    if (lower.includes('wired')) return 'wired.com';
-    if (lower.includes('techcrunch')) return 'techcrunch.com';
-    if (lower.includes('forbes')) return 'forbes.com';
-    if (lower.includes('businessinsider')) return 'businessinsider.es';
-    if (lower.includes('elpais')) return 'elpais.com';
-    if (lower.includes('mundo')) return 'elmundo.es';
-    if (lower.includes('vanguardia')) return 'lavanguardia.com';
-    if (lower.includes('infobae')) return 'infobae.com';
-    if (lower.includes('bbc')) return 'bbc.com';
-    if (lower.includes('cnn')) return 'cnn.com';
-    if (lower.includes('hipertextual')) return 'hipertextual.com';
-    if (lower.includes('computerhoy')) return 'computerhoy.com';
-    if (lower.includes('maldita')) return 'maldita.es';
-    if (lower.includes('andina')) return 'andina.pe';
-    if (lower.includes('peru21')) return 'peru21.pe';
-    if (lower.includes('gestion')) return 'gestion.pe';
     return lower.normalize("NFD").replace(/[\u0300-\u036f]/g, "") + ".com";
 };
 
@@ -100,13 +72,13 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [finishSplashAnimation, setFinishSplashAnimation] = useState(false);
   
-  // ESTADOS GLOBALES
+  // ESTADOS DE PAGO Y SUSCRIPCIÓN
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [isSubscriptionPayment, setIsSubscriptionPayment] = useState(false); 
   const [paymentMethod, setPaymentMethod] = useState('mercadopago');
-  const [courseToBuy, setCourseToBuy] = useState(null); 
-  const [showRefundModal, setShowRefundModal] = useState(false);
-  const [legalModalType, setLegalModalType] = useState(null); 
+  
+  // Estado para saber qué plan eligió el usuario ('monthly' o 'yearly')
+  const [selectedPlanType, setSelectedPlanType] = useState('monthly'); 
+
   const [notification, setNotification] = useState(null);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   const [preferenceId, setPreferenceId] = useState(null); 
@@ -116,9 +88,8 @@ export default function App() {
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [user, setUser] = useState(null); 
   const [userData, setUserData] = useState({ purchasedCourses: [], isSubscribed: false });
-
-  // ESTADO DE NOTICIAS
   const [liveNews, setLiveNews] = useState(STATIC_NEWS); 
+  const [legalModalType, setLegalModalType] = useState(null); 
 
   // SPLASH
   useEffect(() => {
@@ -127,41 +98,49 @@ export default function App() {
     return () => { clearTimeout(timerExit); clearTimeout(timerRemove); };
   }, []);
 
-  // DETECTOR DE PAGOS
+  // DETECTOR DE PAGOS MP (Suscripción)
   useEffect(() => {
     const checkPaymentStatus = async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const status = urlParams.get('status');
-      const preapproval_id = urlParams.get('preapproval_id'); 
+      const preapproval_id = urlParams.get('preapproval_id'); // ID de suscripción MP
       
-      if (user) {
-        if (preapproval_id) {
-            try {
-                const userRef = doc(db, "users", user.uid);
-                await updateDoc(userRef, { 
-                    isSubscribed: true,
-                    subscriptionSource: 'mercadopago_frontend',
-                    subscriptionDate: new Date().toISOString()
-                });
-                showNotification("¡Suscripción Premium Activada!", "success");
-                window.history.replaceState({}, document.title, window.location.pathname);
-                setShowPaymentModal(false);
-            } catch (error) {
-                console.error("Error activando sub:", error);
-                showNotification("Contacta a soporte para activar tu cuenta.", "error");
-            }
-        }
-        else if (status === 'approved') {
-            showNotification("Pago recibido. Tu curso se desbloqueará en unos segundos.", "success");
+      if (user && preapproval_id) {
+        try {
+            const userRef = doc(db, "users", user.uid);
+            await updateDoc(userRef, { 
+                isSubscribed: true,
+                subscriptionSource: 'mercadopago_frontend',
+                subscriptionId: preapproval_id,
+                subscriptionDate: new Date().toISOString()
+            });
+            showNotification("¡Suscripción Premium Activada!", "success");
             window.history.replaceState({}, document.title, window.location.pathname);
             setShowPaymentModal(false);
+        } catch (error) {
+            console.error("Error activando sub:", error);
+            showNotification("Contacta a soporte para activar tu cuenta.", "error");
         }
       }
     };
     if (!loadingCourses && user) checkPaymentStatus();
   }, [user, loadingCourses]); 
 
-  // CARGAR NOTICIAS
+  // CARGAR DATA (Cursos, Noticias, Auth)
+  useEffect(() => { 
+      const fetchCourses = async () => {
+        try {
+            const querySnapshot = await getDocs(collection(db, "courses"));
+            const coursesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setCourses(coursesData.length > 0 ? coursesData : ALL_COURSES);
+            setLoadingCourses(false);
+        } catch (error) { 
+            setCourses(ALL_COURSES); 
+            setLoadingCourses(false); 
+        }
+      };
+      fetchCourses();
+  }, []);
+
   useEffect(() => {
     const fetchNews = async () => {
       try {
@@ -191,24 +170,6 @@ export default function App() {
     fetchNews();
   }, []);
 
-  // CARGAR CURSOS
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "courses"));
-        const coursesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Si hay cursos en DB, úsalos; si no, usa los locales
-        setCourses(coursesData.length > 0 ? coursesData : ALL_COURSES);
-        setLoadingCourses(false);
-      } catch (error) { 
-        setCourses(ALL_COURSES); 
-        setLoadingCourses(false); 
-      }
-    };
-    fetchCourses();
-  }, []);
-
-  // AUTH
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -236,19 +197,10 @@ export default function App() {
   const handleLogout = async () => { await signOut(auth); navigate('/'); };
   const showNotification = (msg, type = 'success') => { setNotification({ msg, type }); setTimeout(() => setNotification(null), 4000); };
 
-  // PAGOS
-  const initiatePayment = (course) => {
-    if (!user) { showNotification("Inicia sesión primero", "error"); handleLogin(); return; }
-    setCourseToBuy(course);
-    setIsSubscriptionPayment(false); 
-    setPreferenceId(null);
-    setPaymentMethod('mercadopago');
-    setShowPaymentModal(true);
-  };
-
-  const initiateSubscription = () => {
+  // --- LÓGICA DE SUSCRIPCIÓN ---
+  const initiateSubscription = (planType = 'monthly') => {
     if (!user) { showNotification("Inicia sesión para suscribirte", "error"); handleLogin(); return; }
-    setIsSubscriptionPayment(true);
+    setSelectedPlanType(planType); 
     setPreferenceId(null);
     setPaymentMethod('mercadopago');
     setShowPaymentModal(true);
@@ -257,53 +209,32 @@ export default function App() {
   const createPreference = async () => {
     setIsLoadingPayment(true);
 
-    // --- LÓGICA DE SUSCRIPCIÓN ---
-    if (isSubscriptionPayment) {
-        try {
-            const response = await fetch("https://us-central1-weberic-25da5.cloudfunctions.net/api/payment/create-subscription", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    userId: user.uid,     
-                    email: user.email 
-                }),
-            });
+    try {
+        // Enviar al backend qué plan queremos ('monthly' o 'yearly')
+        const response = await fetch("https://us-central1-weberic-25da5.cloudfunctions.net/api/payment/create-subscription", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                userId: user.uid,     
+                email: user.email,
+                planType: selectedPlanType 
+            }),
+        });
 
-            const data = await response.json();
+        const data = await response.json();
 
-            if (data.init_point) {
-                window.location.href = data.init_point; 
-            } else {
-                console.error("Error del backend:", data);
-                showNotification("No se pudo generar el link de suscripción.", "error");
-                setIsLoadingPayment(false);
-            }
-        } catch (error) {
-            console.error("Error de conexión:", error);
-            showNotification("Error al conectar con el servidor de pagos.", "error");
+        if (data.init_point) {
+            window.location.href = data.init_point; 
+        } else {
+            console.error("Error del backend:", data);
+            showNotification("No se pudo generar el link de suscripción.", "error");
             setIsLoadingPayment(false);
         }
-        return; 
+    } catch (error) {
+        console.error("Error de conexión:", error);
+        showNotification("Error al conectar con el servidor de pagos.", "error");
+        setIsLoadingPayment(false);
     }
-
-    // --- LÓGICA DE PAGO ÚNICO ---
-    try {
-      const response = await fetch(CREATE_ORDER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-            id: courseToBuy.id, 
-            title: courseToBuy.title, 
-            price: COURSE_PRICE, 
-            userId: user.uid,
-            email: user.email 
-        }), 
-      });
-      const data = await response.json();
-      if (data.id) setPreferenceId(data.id);
-      else showNotification("Error creando orden MP", "error");
-    } catch (error) { showNotification("Error de conexión", "error"); } 
-    finally { setIsLoadingPayment(false); }
   };
 
   const handlePayPalApprove = async (data, actions) => {
@@ -316,18 +247,17 @@ export default function App() {
                 userId: user.uid,
                 orderID: data.orderID,
                 subscriptionID: data.subscriptionID,
-                courseId: courseToBuy?.id,
-                isSubscription: isSubscriptionPayment
+                isSubscription: true,
+                planType: selectedPlanType 
             })
         });
 
         const result = await response.json();
 
         if (result.success) {
-            showNotification("¡Pago verificado exitosamente!", "success");
+            showNotification("¡Suscripción exitosa!", "success");
             setShowPaymentModal(false);
         } else {
-            console.error(result.error);
             showNotification("El pago no pudo ser verificado.", "error");
         }
     } catch (err) { 
@@ -337,6 +267,9 @@ export default function App() {
         setIsLoadingPayment(false);
     }
   };
+
+  // Determinar ID de Plan de PayPal según selección
+  const currentPayPalPlanId = selectedPlanType === 'yearly' ? PAYPAL_PLAN_YEARLY_ID : PAYPAL_PLAN_MONTHLY_ID;
 
   return (
     <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "USD", intent: "subscription", vault: true }}>
@@ -355,95 +288,110 @@ export default function App() {
           <Route path="/noticias" element={<NewsView user={user} userData={userData} handleLogin={handleLogin} handleLogout={handleLogout} news={liveNews} />} />
           <Route path="/suscripcion" element={<SubscriptionView onSubscribe={initiateSubscription} isSubscribed={userData?.isSubscribed} user={user} handleLogin={handleLogin} handleLogout={handleLogout} userData={userData} />} />
           <Route path="/perfil" element={<ProfileView user={user} userData={userData} courses={courses} handleLogout={handleLogout} />} />
-          <Route path="/curso/:courseId" element={<CourseDetailView courses={courses} user={user} handleLogin={handleLogin} handlePayment={initiatePayment} handleLogout={handleLogout} userData={userData} openRefundModal={() => setShowRefundModal(true)} />} />
+          <Route path="/curso/:courseId" element={<CourseDetailView courses={courses} user={user} handleLogin={handleLogin} handlePayment={() => initiateSubscription('monthly')} handleLogout={handleLogout} userData={userData} openRefundModal={() => setShowRefundModal(true)} />} />
           <Route path="/herramienta/:toolId" element={<ToolDetailView user={user} handleLogin={handleLogin} handleLogout={handleLogout} userData={userData} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
+        {/* MODAL DE SUSCRIPCIÓN UNIFICADO */}
         {showPaymentModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#102A43]/90 backdrop-blur-md animate-fade-in-up">
             <div className={`${COLORS.bgCard} rounded-[2rem] shadow-2xl max-w-md w-full p-8 text-center relative border border-[#627D98] animate-pop-in max-h-[90vh] overflow-y-auto`}>
               
               <h3 className={`text-2xl font-black mb-2 ${COLORS.textLight}`}>
-                {isSubscriptionPayment ? "Elige tu Suscripción" : "Finalizar Compra"}
+                Elige tu Plan Premium
               </h3>
-              <p className="text-[#829AB1] text-sm mb-6 font-medium">
-                Selecciona tu método de pago preferido
+              <p className="text-[#829AB1] text-xs mb-6 font-medium">
+                Acceso ilimitado a todos los cursos y actualizaciones
               </p>
 
-              <div className="flex gap-4 mb-8">
+              {/* SELECTOR DE PLANES */}
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                 <button
+                    onClick={() => { setSelectedPlanType('monthly'); setPreferenceId(null); }}
+                    className={`p-4 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-1 ${
+                        selectedPlanType === 'monthly'
+                        ? 'border-[#F9703E] bg-[#F9703E]/10 shadow-[0_0_15px_rgba(249,112,62,0.3)] transform scale-105'
+                        : 'border-[#486581] hover:bg-[#334E68] opacity-70'
+                    }`}
+                 >
+                    <span className="text-xs text-[#BCCCDC] uppercase font-bold">Mensual</span>
+                    <span className="text-xl font-black text-white">{formatCurrency(PLAN_MONTHLY_PRICE)}</span>
+                 </button>
+
+                 <button
+                    onClick={() => { setSelectedPlanType('yearly'); setPreferenceId(null); }}
+                    className={`p-4 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-1 relative ${
+                        selectedPlanType === 'yearly'
+                        ? 'border-[#F9703E] bg-[#F9703E]/10 shadow-[0_0_15px_rgba(249,112,62,0.3)] transform scale-105'
+                        : 'border-[#486581] hover:bg-[#334E68] opacity-70'
+                    }`}
+                 >
+                    <div className="absolute -top-3 bg-[#48BB78] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                        AHORRA 16%
+                    </div>
+                    <span className="text-xs text-[#BCCCDC] uppercase font-bold">Anual</span>
+                    <span className="text-xl font-black text-white">{formatCurrency(PLAN_YEARLY_PRICE)}</span>
+                 </button>
+              </div>
+
+              {/* SELECTOR DE MÉTODO DE PAGO */}
+              <div className="flex gap-4 mb-6 justify-center">
                 <button
                   onClick={() => { setPaymentMethod('mercadopago'); setPreferenceId(null); }}
-                  className={`flex-1 py-4 px-2 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-2 group ${
+                  className={`py-2 px-4 rounded-xl border transition-all text-xs font-bold flex items-center gap-2 ${
                     paymentMethod === 'mercadopago' 
-                      ? 'border-[#009EE3] bg-[#009EE3]/10 shadow-[0_0_20px_rgba(0,158,227,0.3)]' 
-                      : 'border-[#486581] hover:border-[#009EE3]/50 hover:bg-[#102A43]'
+                      ? 'border-[#009EE3] text-[#009EE3] bg-[#009EE3]/10' 
+                      : 'border-[#486581] text-[#829AB1]'
                   }`}
                 >
-                  <CreditCard size={28} className={paymentMethod === 'mercadopago' ? 'text-[#009EE3]' : 'text-[#829AB1]'} />
-                  <div className="flex flex-col">
-                    <span className={`font-bold text-sm ${paymentMethod === 'mercadopago' ? 'text-[#009EE3]' : 'text-[#829AB1]'}`}>Mercado Pago</span>
-                    <span className="text-[10px] font-bold text-[#829AB1] opacity-80">Soles (S/.)</span>
-                  </div>
+                  <CreditCard size={16} /> Mercado Pago (S/.)
                 </button>
 
                 <button
                   onClick={() => { setPaymentMethod('paypal'); setPreferenceId(null); }}
-                  className={`flex-1 py-4 px-2 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-2 group ${
+                  className={`py-2 px-4 rounded-xl border transition-all text-xs font-bold flex items-center gap-2 ${
                     paymentMethod === 'paypal' 
-                      ? 'border-[#FFC439] bg-[#FFC439]/10 shadow-[0_0_20px_rgba(255,196,57,0.2)]' 
-                      : 'border-[#486581] hover:border-[#FFC439]/50 hover:bg-[#102A43]'
+                      ? 'border-[#FFC439] text-[#FFC439] bg-[#FFC439]/10' 
+                      : 'border-[#486581] text-[#829AB1]'
                   }`}
                 >
-                  <div className="flex items-center justify-center w-7 h-7 bg-white rounded-full font-black italic text-[#003087] text-xs">P</div>
-                  <div className="flex flex-col">
-                    <span className={`font-bold text-sm ${paymentMethod === 'paypal' ? 'text-[#FFC439]' : 'text-[#829AB1]'}`}>PayPal</span>
-                    <span className="text-[10px] font-bold text-[#829AB1] opacity-80">Dólares ($)</span>
-                  </div>
+                  <span className="font-serif italic font-black">P</span> PayPal ($)
                 </button>
               </div>
 
-              <div className="min-h-[150px] flex flex-col justify-center">
+              {/* ÁREA DE ACCIÓN DE PAGO */}
+              <div className="min-h-[100px] flex flex-col justify-center">
                 {paymentMethod === 'mercadopago' ? (
-                  isSubscriptionPayment ? (
                     <div className="animate-fade-in">
-                      <p className="text-sm text-[#829AB1] mb-4">Suscripción mensual automática en Soles.</p>
-                      <Button onClick={createPreference} variant="primary" className="w-full h-14 text-lg shadow-lg bg-[#009EE3] hover:bg-[#007eb5] border-none text-white">
-                        {isLoadingPayment ? <Loader className="animate-spin mx-auto"/> : "Suscribirse con Mercado Pago"}
+                      <Button onClick={createPreference} variant="primary" className="w-full h-12 text-base shadow-lg bg-[#009EE3] hover:bg-[#007eb5] border-none text-white font-bold">
+                        {isLoadingPayment ? <Loader className="animate-spin mx-auto"/> : `Suscribirse ${selectedPlanType === 'monthly' ? 'Mensual' : 'Anual'}`}
                       </Button>
+                      <p className="text-[10px] text-[#829AB1] mt-3">
+                        Se cobrará en Soles peruanos automáticamente.
+                      </p>
                     </div>
-                  ) : (
-                    !preferenceId ? (
-                      <div className="animate-fade-in">
-                        <p className="text-sm text-[#829AB1] mb-4">Pago único seguro en Soles.</p>
-                        <Button onClick={createPreference} variant="primary" className="w-full h-14 text-lg shadow-lg bg-[#009EE3] hover:bg-[#007eb5] border-none text-white">
-                          {isLoadingPayment ? <Loader className="animate-spin mx-auto"/> : `Pagar ${formatCurrency(COURSE_PRICE)}`}
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="animate-fade-in-up">
-                        <Wallet initialization={{ preferenceId }} customization={{ texts:{ valueProp: 'smart_option'}}} />
-                      </div>
-                    )
-                  )
                 ) : (
                   <div className="animate-fade-in w-full relative z-10">
-                    <p className="text-sm text-[#829AB1] mb-4">
-                      {isSubscriptionPayment ? "Suscripción internacional en USD." : "Pago seguro internacional en USD."}
-                    </p>
                     <PayPalButtons 
-                        key={isSubscriptionPayment ? "sub-paypal" : "one-paypal"} 
-                        style={{ layout: "vertical", shape: "rect", color: "gold", label: isSubscriptionPayment ? "subscribe" : "pay" }} 
-                        createSubscription={isSubscriptionPayment ? (data, actions) => actions.subscription.create({ 'plan_id': PAYPAL_PLAN_ID }) : undefined}
-                        createOrder={!isSubscriptionPayment ? (data, actions) => actions.order.create({ purchase_units: [{ amount: { value: COURSE_PRICE.toString() }, description: courseToBuy.title }] }) : undefined}
+                        key={`${selectedPlanType}-paypal`} 
+                        style={{ layout: "vertical", shape: "rect", color: "gold", label: "subscribe", height: 45 }} 
+                        createSubscription={(data, actions) => {
+                            return actions.subscription.create({
+                                'plan_id': currentPayPalPlanId 
+                            });
+                        }}
                         onApprove={handlePayPalApprove}
                     />
+                    <p className="text-[10px] text-[#829AB1] mt-2">
+                        Pago internacional seguro en Dólares.
+                    </p>
                   </div>
                 )}
               </div>
 
-              <button onClick={() => setShowPaymentModal(false)} className={`w-full mt-8 text-sm font-bold ${COLORS.textMuted} hover:text-white transition-colors`}>
-                Cancelar y volver
+              <button onClick={() => setShowPaymentModal(false)} className={`w-full mt-6 text-xs font-bold ${COLORS.textMuted} hover:text-white transition-colors underline`}>
+                Cancelar
               </button>
             </div>
           </div>
@@ -451,7 +399,6 @@ export default function App() {
 
         <LegalModal type={legalModalType} onClose={() => setLegalModalType(null)} />
         {showSplash && <SplashScreen finishAnimation={finishSplashAnimation} />}
-        
         <NewsBubble news={liveNews} />
 
       </div>

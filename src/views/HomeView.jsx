@@ -1,11 +1,11 @@
 // src/views/HomeView.jsx
 import React, { useEffect, useRef } from 'react';
-import { Sparkles, Search, Loader, Lock, CalendarCheck, Crown } from 'lucide-react';
+import { Sparkles, Search, Loader, Lock, CalendarCheck, Crown, PlayCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ToolsSection from '../components/ToolsSection'; 
 import { Badge } from '../components/UI';
-import { COLORS, formatCurrency, ORIGINAL_PRICE, COURSE_PRICE } from '../utils/constants';
+import { COLORS } from '../utils/constants';
 
 const HomeView = ({ 
   courses, loadingCourses, userData, user, 
@@ -80,10 +80,17 @@ const HomeView = ({
   const handleMove = (clientX) => { const s = state.current; if (!s.isDragging) return; const delta = clientX - s.lastX; s.position += delta; s.lastX = clientX; s.velocity = delta; };
   const handleEnd = () => { state.current.isDragging = false; };
   
-  // NAVEGACIÓN DIRECTA AL DETALLE DEL CURSO
+  // CAMBIO PRINCIPAL: Si está suscrito entra, si no, va a suscripción
   const handleCardClick = (course) => { 
     if (Math.abs(state.current.velocity) > 2) return; 
-    navigate(`/curso/${course.id}`);
+    
+    // Si es gratis o está suscrito, entra al curso
+    if (course.isFree || userData?.isSubscribed) {
+        navigate(`/curso/${course.id}`);
+    } else {
+        // Si no, lo mandamos a la página de suscripción (o abres el modal directamente si prefieres)
+        navigate('/suscripcion');
+    }
   };
 
   return (
@@ -104,20 +111,19 @@ const HomeView = ({
               className="mb-6 hover:scale-105 transition-transform active:scale-95 group"
             >
               <Badge color="orange" className="shadow-lg inline-flex items-center gap-1 cursor-pointer group-hover:bg-[#F9703E]/30 transition-colors">
-                <Sparkles size={14} className="animate-pulse"/> SUSCRÍBETE Y ACCEDE A TODO
+                <Sparkles size={14} className="animate-pulse"/> ACCESO TOTAL POR $3/MES
               </Badge>
             </button>
           )}
 
           <h1 className={`text-3xl md:text-5xl font-black mb-8 tracking-tight leading-tight ${COLORS.textLight} drop-shadow-2xl flex flex-col items-center perspective-500`}>
             <span className="block animate-pop-in opacity-0" style={{animationDelay: '0.2s', animationFillMode: 'forwards'}}>
-              Crea activos con IA,
+              Domina la IA,
             </span>
             <span className="block mt-2 relative animate-fade-in-up opacity-0 group" style={{animationDelay: '0.5s', animationFillMode: 'forwards'}}>
               <span className={`bg-gradient-to-r from-[#F9703E] to-[#FF5722] bg-clip-text text-transparent inline-block transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-2 cursor-default`}>
-                  Monetiza desde hoy.
+                  una sola suscripción.
               </span>
-              <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-[110%] h-8 bg-[#F9703E]/40 blur-[20px] animate-pulse-slow rounded-full opacity-80 -z-10 group-hover:bg-[#F9703E]/70 group-hover:blur-[30px] transition-all duration-500"></span>
             </span>
           </h1>
 
@@ -128,7 +134,7 @@ const HomeView = ({
       <div className="relative z-30 px-6 mb-12 animate-fade-in-up -mt-6" style={{animationDelay: '1s', animationFillMode: 'forwards', opacity: 0}}>
         <div className="max-w-xl mx-auto relative group">
           <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none"><Search className={`h-6 w-6 ${COLORS.textMuted} group-focus-within:text-[#F9703E] transition-colors`} /></div>
-          <input type="text" placeholder="Buscar (ej: YouTube, Dinero, Web...)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full pl-14 pr-6 py-4 rounded-full border border-[#627D98] ${COLORS.bgCard} shadow-2xl text-lg font-bold ${COLORS.textLight} placeholder:${COLORS.textMuted} focus:outline-none focus:border-[#F9703E] focus:ring-1 focus:ring-[#F9703E] transition-all duration-300 focus:shadow-[#F9703E]/20 select-text`}/>
+          <input type="text" placeholder="Buscar cursos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full pl-14 pr-6 py-4 rounded-full border border-[#627D98] ${COLORS.bgCard} shadow-2xl text-lg font-bold ${COLORS.textLight} placeholder:${COLORS.textMuted} focus:outline-none focus:border-[#F9703E] focus:ring-1 focus:ring-[#F9703E] transition-all duration-300 focus:shadow-[#F9703E]/20 select-text`}/>
         </div>
       </div>
       
@@ -137,7 +143,9 @@ const HomeView = ({
         {loadingCourses ? <div className="flex justify-center h-full items-center"><Loader className={`animate-spin ${COLORS.textOrange}`} size={50}/></div> : filteredCourses.length === 0 ? <div className="text-center pt-20"><p className={`${COLORS.textMuted} text-xl font-bold`}>No encontramos cursos 🔍</p><button onClick={() => setSearchTerm("")} className={`mt-4 ${COLORS.textOrange} font-bold underline hover:text-white transition-colors`}>Ver todos</button></div> : (
           <div className="relative w-full h-full overflow-hidden">
             {filteredCourses.map((course, index) => {
-               const isUnlocked = course.isFree || userData?.isSubscribed || userData?.purchasedCourses?.includes(course.id);
+               // AHORA EL DESBLOQUEO ES SOLO SI ES GRATIS O ESTÁ SUSCRITO
+               const isUnlocked = course.isFree || userData?.isSubscribed;
+               
                return (
                 <div key={course.id} ref={el => cardsRef.current[index] = el} className={`absolute top-10 left-0 w-[300px] md:w-[340px] h-[500px] rounded-[2.5rem] bg-[#486581] border-2 border-[#627D98] shadow-2xl overflow-hidden flex flex-col hover:border-[#F9703E] will-change-transform`} style={{ transform: 'translate3d(-1000px, 0, 0)', willChange: 'transform' }}>
                   <div className="relative h-64 overflow-hidden pointer-events-none">
@@ -150,16 +158,20 @@ const HomeView = ({
                     <p className={`${COLORS.textMuted} text-sm mb-6 line-clamp-3 font-medium`}>{course.description}</p>
                     <div className="mt-auto flex justify-between items-center pt-4 border-t border-[#627D98] pointer-events-auto">
                         <span className={`text-xs font-bold ${COLORS.textMuted} flex items-center gap-2`}><CalendarCheck size={16} className={COLORS.textOrange}/> {course.duration}</span>
-                        <div className="flex flex-col items-end gap-0.5">
-                          {!isUnlocked && (
-                            <span className="text-[10px] text-[#BCCCDC] font-bold line-through decoration-[#F9703E]/70 decoration-2">
-                              {formatCurrency(ORIGINAL_PRICE)}
-                            </span>
-                          )}
-                          <button onClick={(e) => { e.stopPropagation(); handleCardClick(course); }} className={`${isUnlocked ? 'bg-[#48BB78]/20 text-[#48BB78]' : `${COLORS.accentOrange} text-white`} px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:scale-105 transition-transform cursor-pointer`}>
-                            {isUnlocked ? 'Ver Curso' : formatCurrency(COURSE_PRICE)}
-                          </button>
-                        </div>
+                        
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); handleCardClick(course); }} 
+                            className={`${isUnlocked 
+                                ? 'bg-[#48BB78] text-white hover:bg-[#38a169]' 
+                                : `${COLORS.accentOrange} text-white hover:bg-[#e06335]`} 
+                                px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:scale-105 transition-transform cursor-pointer flex items-center gap-2`}
+                        >
+                            {isUnlocked ? (
+                                <><PlayCircle size={16}/> Ver Curso</>
+                            ) : (
+                                <><Lock size={14}/> Suscribirse</>
+                            )}
+                        </button>
                     </div>
                   </div>
                 </div>

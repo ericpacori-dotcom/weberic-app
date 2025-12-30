@@ -1,27 +1,27 @@
 // functions/controllers/payment.controller.js
 import { MercadoPagoConfig, PreApproval } from 'mercadopago';
 
-// Usamos tus credenciales del entorno
 const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 
 export const createSubscription = async (req, res) => {
   try {
-    const { userId, email } = req.body; 
+    const { userId, email, planType } = req.body; 
+
+    // ASIGNACIÓN DE IDS DE PLANES (Los que me pasaste)
+    // Mensual: 3bac21d11f4047be91016c280dc0bb33
+    // Anual: ddd5afaea20940fca33e7e60e65df62d
+    const planId = planType === 'yearly' 
+      ? "ddd5afaea20940fca33e7e60e65df62d" 
+      : "3bac21d11f4047be91016c280dc0bb33";
 
     const preapproval = new PreApproval(client);
 
     const result = await preapproval.create({
       body: {
-        reason: "Suscripción Mensual - Haeric Activos",
-        external_reference: userId, // VINCULA EL PAGO AL USUARIO
+        preapproval_plan_id: planId, // Usamos el Plan pre-configurado
         payer_email: email, 
-        auto_recurring: {
-          frequency: 1,
-          frequency_type: "months",
-          transaction_amount: 29.90, // PRECIO MENSUAL
-          currency_id: "PEN"
-        },
-        back_url: "https://tudominio.com/perfil", 
+        external_reference: userId, // Para saber qué usuario pagó
+        back_url: "https://weberic-app.web.app/perfil", 
         status: "pending"
       }
     });
