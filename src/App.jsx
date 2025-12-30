@@ -29,6 +29,9 @@ import LegalModal from './components/LegalModal';
 import SplashScreen from './components/SplashScreen'; 
 import NewsBubble from './components/NewsBubble'; 
 
+// IMPORTAMOS EL COMPONENTE DE ADMINISTRACIÓN (NUEVO)
+import AdminUpload from './components/AdminUpload';
+
 // --- VISTAS ---
 import HomeView from './views/HomeView';
 import SubscriptionView from './views/SubscriptionView';
@@ -42,6 +45,7 @@ const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID; 
 
 // URLs DEL BACKEND (CLOUD FUNCTIONS)
+// Asegúrate de que esta URL coincida con la de tu proyecto en Firebase
 const CREATE_ORDER_URL = "https://us-central1-weberic-25da5.cloudfunctions.net/createOrder"; 
 const VERIFY_PAYPAL_URL = "https://us-central1-weberic-25da5.cloudfunctions.net/verifyPayPalEndpoint";
 
@@ -52,7 +56,7 @@ const MP_SUBSCRIPTION_PLAN_ID = "3bac21d11f4047be91016c280dc0bb33";
 const RSS_URL = "https://news.google.com/rss/search?q=inteligencia+artificial+tecnologia&hl=es-419&gl=PE&ceid=PE:es-419";
 const API_URL = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}`;
 
-// Inicializar Mercado Pago (CORREGIDO: Ya acepta claves APP_USR de producción)
+// Inicializar Mercado Pago
 if (MP_PUBLIC_KEY) {
   initMercadoPago(MP_PUBLIC_KEY, { locale: 'es-PE' });
 } else {
@@ -196,6 +200,7 @@ export default function App() {
       try {
         const querySnapshot = await getDocs(collection(db, "courses"));
         const coursesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Si hay cursos en DB, úsalos; si no, usa los locales
         setCourses(coursesData.length > 0 ? coursesData : ALL_COURSES);
         setLoadingCourses(false);
       } catch (error) { 
@@ -255,15 +260,14 @@ export default function App() {
   const createPreference = async () => {
     setIsLoadingPayment(true);
 
-    // --- LÓGICA DE SUSCRIPCIÓN (MODIFICADA) ---
+    // --- LÓGICA DE SUSCRIPCIÓN ---
     if (isSubscriptionPayment) {
         try {
-            // Usamos tu URL de producción de Firebase (basada en tu ID de proyecto: weberic-25da5)
             const response = await fetch("https://us-central1-weberic-25da5.cloudfunctions.net/api/payment/create-subscription", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
-                    userId: user.uid,     // Enviamos ID para vincular la renovación
+                    userId: user.uid,     
                     email: user.email 
                 }),
             });
@@ -271,7 +275,6 @@ export default function App() {
             const data = await response.json();
 
             if (data.init_point) {
-                // Redirigimos al usuario al link ÚNICO generado por tu backend
                 window.location.href = data.init_point; 
             } else {
                 console.error("Error del backend:", data);
@@ -283,10 +286,10 @@ export default function App() {
             showNotification("Error al conectar con el servidor de pagos.", "error");
             setIsLoadingPayment(false);
         }
-        return; // Detenemos la ejecución aquí
+        return; 
     }
 
-    // --- LÓGICA DE PAGO ÚNICO (ORIGINAL) ---
+    // --- LÓGICA DE PAGO ÚNICO ---
     try {
       const response = await fetch(CREATE_ORDER_URL, {
         method: "POST",
@@ -453,6 +456,9 @@ export default function App() {
         {showSplash && <SplashScreen finishAnimation={finishSplashAnimation} />}
         
         <NewsBubble news={liveNews} />
+
+        {/* --- COMPONENTE DE ADMINISTRACIÓN (BORRAR DESPUÉS DE USAR) --- */}
+        <AdminUpload />
 
       </div>
     </PayPalScriptProvider>
