@@ -254,10 +254,39 @@ export default function App() {
 
   const createPreference = async () => {
     setIsLoadingPayment(true);
+
+    // --- LÓGICA DE SUSCRIPCIÓN (MODIFICADA) ---
     if (isSubscriptionPayment) {
-        setTimeout(() => { window.location.href = `https://www.mercadopago.com.pe/subscriptions/checkout?preapproval_plan_id=${MP_SUBSCRIPTION_PLAN_ID}`; }, 1500);
-        return; 
+        try {
+            // Usamos tu URL de producción de Firebase (basada en tu ID de proyecto: weberic-25da5)
+            const response = await fetch("https://us-central1-weberic-25da5.cloudfunctions.net/api/payment/create-subscription", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    userId: user.uid,     // Enviamos ID para vincular la renovación
+                    email: user.email 
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.init_point) {
+                // Redirigimos al usuario al link ÚNICO generado por tu backend
+                window.location.href = data.init_point; 
+            } else {
+                console.error("Error del backend:", data);
+                showNotification("No se pudo generar el link de suscripción.", "error");
+                setIsLoadingPayment(false);
+            }
+        } catch (error) {
+            console.error("Error de conexión:", error);
+            showNotification("Error al conectar con el servidor de pagos.", "error");
+            setIsLoadingPayment(false);
+        }
+        return; // Detenemos la ejecución aquí
     }
+
+    // --- LÓGICA DE PAGO ÚNICO (ORIGINAL) ---
     try {
       const response = await fetch(CREATE_ORDER_URL, {
         method: "POST",

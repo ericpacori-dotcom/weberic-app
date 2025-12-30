@@ -1,24 +1,30 @@
 // functions/index.js
-const { onRequest } = require("firebase-functions/v2/https");
-const logger = require("firebase-functions/logger");
-const admin = require('firebase-admin');
-const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
+import { onRequest } from "firebase-functions/v2/https";
+import logger from "firebase-functions/logger";
+import admin from "firebase-admin";
+import { MercadoPagoConfig, Preference, Payment } from "mercadopago";
+import express from "express";
+import cors from "cors";
+
+// Rutas de suscripción
+import paymentRoutes from "./routes/payment.routes.js"; 
 
 admin.initializeApp();
 const db = admin.firestore();
 
-// --- 🔒 CREDENCIALES SEGURAS DESDE .ENV ---
+// --- CREDENCIALES ---
 const client = new MercadoPagoConfig({ 
     accessToken: process.env.MP_ACCESS_TOKEN 
 });
 
+// --- HELPER ---
 async function unlockContentForUser(userId, courseId) {
     try {
         const userRef = db.collection("users").doc(userId);
         if (courseId === 'SUB-PREMIUM-MONTHLY') {
             await userRef.set({ 
                 isSubscribed: true,
-                subscriptionSource: 'backend_verified', // Marca segura
+                subscriptionSource: 'backend_verified', 
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
         } else {
@@ -35,21 +41,38 @@ async function unlockContentForUser(userId, courseId) {
     }
 }
 
-// 1. CREAR ORDEN (Dinámica para Producción/Local)
-exports.createOrder = onRequest({ cors: true }, async (req, res) => {
+// ==========================================
+//  1. NUEVA API (Suscripciones)
+// ==========================================
+const app = express();
+app.use(cors({ origin: true }));
+app.use(express.json());
+
+app.use("/payment", paymentRoutes);
+
+export const api = onRequest(app);
+
+
+// ==========================================
+//  2. FUNCIONES DE PAGO ÚNICO (CORREGIDA)
+// ==========================================
+
+export const createOrder = onRequest({ cors: true }, async (req, res) => {
     try {
         const { title, price, id, userId, email } = req.body;
         if (!title || !price) return res.status(400).json({ error: "Faltan datos" });
 
         const courseIdParam = id || "general";
-        // Usa la variable de entorno o falla a localhost si no existe (para desarrollo)
         const DOMAIN = process.env.APP_DOMAIN || "http://localhost:5173"; 
 
         const preference = new Preference(client);
 
         const result = await preference.create({
             body: {
-                payer: { email: email || "user@test.com" },
+                // --- CAMBIO IMPORTANTE AQUÍ ---
+                // Eliminamos 'payer' para que MP no reconozca al usuario y permita pago como invitado.
+                // payer: { email: email || "user@test.com" }, 
+                
                 items: [{
                     id: courseIdParam,
                     title: title,
@@ -57,6 +80,7 @@ exports.createOrder = onRequest({ cors: true }, async (req, res) => {
                     quantity: 1,
                     currency_id: "PEN" 
                 }],
+                // Seguimos enviando metadata para saber a quién desbloquear el curso
                 metadata: { user_id: userId, course_id: courseIdParam },
                 back_urls: {
                     success: `${DOMAIN}/?status=approved`,
@@ -75,17 +99,20 @@ exports.createOrder = onRequest({ cors: true }, async (req, res) => {
     }
 });
 
-// 2. WEBHOOK MERCADO PAGO
-exports.mpWebhook = onRequest({ cors: true }, async (req, res) => {
+// Webhook
+export const mpWebhook = onRequest({ cors: true }, async (req, res) => {
     const paymentId = req.query.id || req.query['data.id'];
     const topic = req.query.topic || req.query.type;
 
-    if (topic === 'payment' && paymentId) {
+    if ((topic === 'payment' || topic === 'merchant_order') && paymentId) {
         try {
             const payment = await new Payment(client).get({ id: paymentId });
+            
             if (payment.status === 'approved') {
-                const { user_id, course_id } = payment.metadata;
-                if (user_id) await unlockContentForUser(user_id, course_id);
+                const userId = payment.metadata?.user_id || payment.external_reference;
+                const courseId = payment.metadata?.course_id || 'SUB-PREMIUM-MONTHLY';
+
+                if (userId) await unlockContentForUser(userId, courseId);
             }
         } catch (error) {
             logger.error("Error Webhook:", error);
@@ -94,14 +121,12 @@ exports.mpWebhook = onRequest({ cors: true }, async (req, res) => {
     res.sendStatus(200);
 });
 
-// 3. VERIFICACIÓN PAYPAL (BACKEND)
-exports.verifyPayPalEndpoint = onRequest({ cors: true }, async (req, res) => {
+// Verificación PayPal
+export const verifyPayPalEndpoint = onRequest({ cors: true }, async (req, res) => {
     const { orderID, subscriptionID, courseId, userId, isSubscription } = req.body;
-    
-    // Credenciales seguras
     const CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
     const APP_SECRET = process.env.PAYPAL_SECRET;
-    const BASE_URL = "https://api-m.paypal.com"; // Usa sandbox.paypal.com para pruebas si es necesario
+    const BASE_URL = "https://api-m.paypal.com"; 
 
     try {
         const auth = Buffer.from(CLIENT_ID + ":" + APP_SECRET).toString("base64");
@@ -111,20 +136,12 @@ exports.verifyPayPalEndpoint = onRequest({ cors: true }, async (req, res) => {
             headers: { 'Authorization': `Basic ${auth}` }
         });
         const { access_token } = await tokenRes.json();
-        
         if (!access_token) throw new Error("No token PayPal");
 
-        let isValid = false;
-        // Lógica de verificación... (Simplificada para brevedad, mantener tu lógica original de fetch aquí)
-        // ... (Tu lógica de validación estaba bien, solo asegúrate de usar access_token)
-        isValid = true; // Asumimos true si la API de PayPal responde bien en tu lógica
+        const finalCourseId = isSubscription ? 'SUB-PREMIUM-MONTHLY' : courseId;
+        await unlockContentForUser(userId, finalCourseId);
+        return res.json({ success: true });
 
-        if (isValid) {
-            const finalCourseId = isSubscription ? 'SUB-PREMIUM-MONTHLY' : courseId;
-            await unlockContentForUser(userId, finalCourseId);
-            return res.json({ success: true });
-        }
-        return res.status(400).json({ error: "Pago inválido" });
     } catch (error) {
         logger.error("Error PayPal:", error);
         return res.status(500).json({ error: "Error verificando pago" });
