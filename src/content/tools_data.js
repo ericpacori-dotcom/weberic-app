@@ -1,7 +1,7 @@
 // src/content/tools_data.js
 
 export const AI_TOOLS_DATA = [
-  // --- LLMs & CHATBOTS ---
+  // --- 💬 CHATBOTS & ASISTENTES (LLMs) ---
   {
     id: "chatgpt",
     name: "ChatGPT",
@@ -57,8 +57,52 @@ export const AI_TOOLS_DATA = [
     prompt: "Crea una imagen de un gato astronauta.",
     image: "https://www.google.com/s2/favicons?domain=microsoft.com&sz=128"
   },
+  {
+    id: "hugging_chat",
+    name: "HuggingChat",
+    category: "Chatbots",
+    popularity: 88,
+    website: "https://huggingface.co/chat",
+    description: "La alternativa open source a ChatGPT.",
+    tip: "Prueba los últimos modelos abiertos como Llama 3.",
+    prompt: "Prueba modelo Llama 3 70B.",
+    image: "https://www.google.com/s2/favicons?domain=huggingface.co&sz=128"
+  },
+  {
+    id: "poe",
+    name: "Poe",
+    category: "Chatbots",
+    popularity: 93,
+    website: "https://poe.com",
+    description: "Todos los chatbots en una sola app (Quora).",
+    tip: "Crea tus propios bots personalizados.",
+    prompt: "Habla con GPT-4 y Claude a la vez.",
+    image: "https://www.google.com/s2/favicons?domain=poe.com&sz=128"
+  },
+  {
+    id: "pi",
+    name: "Pi (Inflection)",
+    category: "Chatbots",
+    popularity: 90,
+    website: "https://pi.ai",
+    description: "El chatbot más empático y personal.",
+    tip: "Úsalo para desahogarte o pedir consejo.",
+    prompt: "Me siento estresado hoy.",
+    image: "https://www.google.com/s2/favicons?domain=pi.ai&sz=128"
+  },
+  {
+    id: "you",
+    name: "You.com",
+    category: "Búsqueda",
+    popularity: 92,
+    website: "https://you.com",
+    description: "Buscador con chat IA integrado.",
+    tip: "Usa modos 'Genius' para respuestas complejas.",
+    prompt: "Escribe código Python para scraping.",
+    image: "https://www.google.com/s2/favicons?domain=you.com&sz=128"
+  },
 
-  // --- IMÁGENES & ARTE ---
+  // --- 🎨 IMÁGENES & ARTE ---
   {
     id: "midjourney",
     name: "Midjourney",
@@ -169,8 +213,52 @@ export const AI_TOOLS_DATA = [
     prompt: "Retrato de moda, estilo revista Vogue.",
     image: "https://www.google.com/s2/favicons?domain=playgroundai.com&sz=128"
   },
+  {
+    id: "tensor_art",
+    name: "Tensor.art",
+    category: "Imágenes",
+    popularity: 85,
+    website: "https://tensor.art",
+    description: "Generación de imágenes y host de modelos gratuito.",
+    tip: "Ejecuta Stable Diffusion gratis online.",
+    prompt: "Retrato realista.",
+    image: "https://www.google.com/s2/favicons?domain=tensor.art&sz=128"
+  },
+  {
+    id: "seaart",
+    name: "SeaArt",
+    category: "Imágenes",
+    popularity: 84,
+    website: "https://seaart.ai",
+    description: "Potente generador de imágenes asiático.",
+    tip: "Muchas herramientas de controlnet integradas.",
+    prompt: "Pose específica de personaje.",
+    image: "https://www.google.com/s2/favicons?domain=seaart.ai&sz=128"
+  },
+  {
+    id: "mage_space",
+    name: "Mage.space",
+    category: "Imágenes",
+    popularity: 87,
+    website: "https://mage.space",
+    description: "Generación rápida y sin censura.",
+    tip: "Modelos SDXL de alta velocidad.",
+    prompt: "Arte conceptual épico.",
+    image: "https://www.google.com/s2/favicons?domain=mage.space&sz=128"
+  },
+  {
+    id: "scribble_diffusion",
+    name: "Scribble Diffusion",
+    category: "Imágenes",
+    popularity: 87,
+    website: "https://scribblediffusion.com",
+    description: "Convierte bocetos en imágenes realistas.",
+    tip: "Dibuja el contorno y describe el resultado.",
+    prompt: "Gato dibujado a mano -> Foto real.",
+    image: "https://www.google.com/s2/favicons?domain=scribblediffusion.com&sz=128"
+  },
 
-  // --- VIDEO & ANIMACIÓN ---
+  // --- 🎥 VIDEO & ANIMACIÓN ---
   {
     id: "sora",
     name: "Sora",
@@ -281,8 +369,50 @@ export const AI_TOOLS_DATA = [
     prompt: "Bucle infinito de un túnel fractal.",
     image: "https://www.google.com/s2/favicons?domain=lumalabs.ai&sz=128"
   },
-
-  // --- AUDIO & VOZ ---
+  {
+    id: "vidyo",
+    name: "Vidyo.ai",
+    category: "Video",
+    popularity: 89,
+    website: "https://vidyo.ai",
+    description: "Recorta videos largos para TikTok/Reels.",
+    tip: "Plantillas automáticas para subtítulos.",
+    prompt: "Haz shorts de este podcast.",
+    image: "https://www.google.com/s2/favicons?domain=vidyo.ai&sz=128"
+  },
+  {
+    id: "munch",
+    name: "Munch",
+    category: "Video",
+    popularity: 88,
+    website: "https://getmunch.com",
+    description: "Extrae los clips más 'engageable' con IA.",
+    tip: "Analiza tendencias de palabras clave.",
+    prompt: "Busca clips virales de esta entrevista.",
+    image: "https://www.google.com/s2/favicons?domain=getmunch.com&sz=128"
+  },
+  {
+    id: "rask",
+    name: "Rask.ai",
+    category: "Video",
+    popularity: 92,
+    website: "https://rask.ai",
+    description: "Doblage y traducción de video automática.",
+    tip: "Clona tu voz en otro idioma.",
+    prompt: "Traduce mi video al alemán.",
+    image: "https://www.google.com/s2/favicons?domain=rask.ai&sz=128"
+  },
+  {
+    id: "d_id",
+    name: "D-ID",
+    category: "Video",
+    popularity: 91,
+    website: "https://d-id.com",
+    description: "Anima fotos para que hablen.",
+    tip: "Ideal para avatares históricos.",
+    prompt: "Haz que la Mona Lisa salude.",
+    image: "https://www.google.com/s2/favicons?domain=d-id.com&sz=128"
+  },// --- 🎙️ AUDIO & VOZ ---
   {
     id: "elevenlabs",
     name: "ElevenLabs",
@@ -297,7 +427,7 @@ export const AI_TOOLS_DATA = [
   {
     id: "suno",
     name: "Suno AI",
-    category: "Música",
+    category: "Audio",
     popularity: 97,
     website: "https://suno.com",
     description: "Crea canciones completas con letra y voz (Radio Quality).",
@@ -308,7 +438,7 @@ export const AI_TOOLS_DATA = [
   {
     id: "udio",
     name: "Udio",
-    category: "Música",
+    category: "Audio",
     popularity: 96,
     website: "https://udio.com",
     description: "Música generativa con alta fidelidad.",
@@ -352,7 +482,7 @@ export const AI_TOOLS_DATA = [
   {
     id: "soundraw",
     name: "Soundraw",
-    category: "Música",
+    category: "Audio",
     popularity: 87,
     website: "https://soundraw.io",
     description: "Generador de música de fondo libre de derechos.",
@@ -374,7 +504,7 @@ export const AI_TOOLS_DATA = [
   {
     id: "otter",
     name: "Otter.ai",
-    category: "Reuniones",
+    category: "Productividad",
     popularity: 91,
     website: "https://otter.ai",
     description: "Transcribe reuniones y toma notas automáticamente.",
@@ -385,7 +515,7 @@ export const AI_TOOLS_DATA = [
   {
     id: "fireflies",
     name: "Fireflies.ai",
-    category: "Reuniones",
+    category: "Productividad",
     popularity: 90,
     website: "https://fireflies.ai",
     description: "Inteligencia para tus conversaciones de voz.",
@@ -394,7 +524,7 @@ export const AI_TOOLS_DATA = [
     image: "https://www.google.com/s2/favicons?domain=fireflies.ai&sz=128"
   },
 
-  // --- PROGRAMACIÓN & CÓDIGO ---
+  // --- 💻 PROGRAMACIÓN & CÓDIGO ---
   {
     id: "github_copilot",
     name: "GitHub Copilot",
@@ -506,7 +636,7 @@ export const AI_TOOLS_DATA = [
     image: "https://www.google.com/s2/favicons?domain=figma.com&sz=128"
   },
 
-  // --- PRODUCTIVIDAD & ESCRITURA (Parte 1) ---
+  // --- 📝 PRODUCTIVIDAD & ESCRITURA ---
   {
     id: "notion_ai",
     name: "Notion AI",
@@ -574,6 +704,52 @@ export const AI_TOOLS_DATA = [
     image: "https://www.google.com/s2/favicons?domain=deepl.com&sz=128"
   },
   {
+    id: "chatpdf",
+    name: "ChatPDF",
+    category: "Productividad",
+    popularity: 93,
+    website: "https://chatpdf.com",
+    description: "Habla con cualquier documento PDF.",
+    tip: "Sube contratos o papers para entenderlos rápido.",
+    prompt: "¿Cuáles son las cláusulas de rescisión aquí?",
+    image: "https://www.google.com/s2/favicons?domain=chatpdf.com&sz=128"
+  },
+  {
+    id: "merlin",
+    name: "Merlin",
+    category: "Productividad",
+    popularity: 90,
+    website: "https://getmerlin.in",
+    description: "Extensión de Chrome con GPT-4 en todas partes.",
+    tip: "Responde emails y resume videos de YouTube.",
+    prompt: "Resume este video de 20 minutos.",
+    image: "https://www.google.com/s2/favicons?domain=getmerlin.in&sz=128"
+  },
+  {
+    id: "rewind_ai",
+    name: "Rewind",
+    category: "Productividad",
+    popularity: 88,
+    website: "https://rewind.ai",
+    description: "El buscador para tu vida (graba tu pantalla).",
+    tip: "Encuentra algo que viste hace semanas.",
+    prompt: "¿Qué video de YouTube vi ayer sobre cocina?",
+    image: "https://www.google.com/s2/favicons?domain=rewind.ai&sz=128"
+  },
+  {
+    id: "mem",
+    name: "Mem",
+    category: "Productividad",
+    popularity: 87,
+    website: "https://mem.ai",
+    description: "Notas que se organizan solas.",
+    tip: "Conecta tu email y calendario.",
+    prompt: "¿Cuándo es mi reunión con Juan?",
+    image: "https://www.google.com/s2/favicons?domain=mem.ai&sz=128"
+  },
+
+  // --- 🌐 WEB & AUTOMATIZACIÓN ---
+  {
     id: "zapier",
     name: "Zapier",
     category: "Automatización",
@@ -596,15 +772,37 @@ export const AI_TOOLS_DATA = [
     image: "https://www.google.com/s2/favicons?domain=make.com&sz=128"
   },
   {
-    id: "chatpdf",
-    name: "ChatPDF",
+    id: "browse_ai",
+    name: "Browse AI",
+    category: "Automatización",
+    popularity: 91,
+    website: "https://browse.ai",
+    description: "Extrae datos de cualquier sitio web fácilmente.",
+    tip: "Monitoriza cambios en webs de la competencia.",
+    prompt: "Monitoriza el precio de este producto.",
+    image: "https://www.google.com/s2/favicons?domain=browse.ai&sz=128"
+  },
+  {
+    id: "harpa",
+    name: "Harpa AI",
     category: "Productividad",
-    popularity: 93,
-    website: "https://chatpdf.com",
-    description: "Habla con cualquier documento PDF.",
-    tip: "Sube contratos o papers para entenderlos rápido.",
-    prompt: "¿Cuáles son las cláusulas de rescisión aquí?",
-    image: "https://www.google.com/s2/favicons?domain=chatpdf.com&sz=128"
+    popularity: 89,
+    website: "https://harpa.ai",
+    description: "Agente web híbrido para automatización.",
+    tip: "Rastrea precios y automatiza clicks.",
+    prompt: "Avísame si baja el precio.",
+    image: "https://www.google.com/s2/favicons?domain=harpa.ai&sz=128"
+  },
+  {
+    id: "kadoa",
+    name: "Kadoa",
+    category: "Data",
+    popularity: 87,
+    website: "https://kadoa.com",
+    description: "Web scraping con IA sin mantenimiento.",
+    tip: "Extrae datos no estructurados.",
+    prompt: "Extrae todos los productos de esta tienda.",
+    image: "https://www.google.com/s2/favicons?domain=kadoa.com&sz=128"
   },
   {
     id: "gamma",
@@ -640,433 +838,60 @@ export const AI_TOOLS_DATA = [
     image: "https://www.google.com/s2/favicons?domain=beautiful.ai&sz=128"
   },
   {
-    id: "canva_magic",
-    name: "Canva Magic",
-    category: "Diseño",
-    popularity: 99,
-    website: "https://canva.com",
-    description: "Suite completa de IA dentro de Canva.",
-    tip: "Usa 'Magic Switch' para cambiar formatos.",
-    prompt: "Diseña un post de Instagram para el día de la madre.",
-    image: "https://www.google.com/s2/favicons?domain=canva.com&sz=128"
+    id: "softr",
+    name: "Softr AI",
+    category: "Web",
+    popularity: 90,
+    website: "https://softr.io",
+    description: "Crea apps web desde Airtable/Google Sheets.",
+    tip: "Genera la app entera con un prompt.",
+    prompt: "Directorio de empleados con Airtable.",
+    image: "https://www.google.com/s2/favicons?domain=softr.io&sz=128"
   },
   {
-    id: "rewind_ai",
-    name: "Rewind",
-    category: "Productividad",
-    popularity: 88,
-    website: "https://rewind.ai",
-    description: "El buscador para tu vida (graba tu pantalla).",
-    tip: "Encuentra algo que viste hace semanas.",
-    prompt: "¿Qué video de YouTube vi ayer sobre cocina?",
-    image: "https://www.google.com/s2/favicons?domain=rewind.ai&sz=128"
-  },
-  {
-    id: "mem",
-    name: "Mem",
-    category: "Productividad",
-    popularity: 87,
-    website: "https://mem.ai",
-    description: "Notas que se organizan solas.",
-    tip: "Conecta tu email y calendario.",
-    prompt: "¿Cuándo es mi reunión con Juan?",
-    image: "https://www.google.com/s2/favicons?domain=mem.ai&sz=128"
-  },
-
-  
-  {
-    id: "chatgpt",
-    name: "ChatGPT",
-    category: "Chatbots",
-    popularity: 100,
-    website: "https://chat.openai.com",
-    description: "El modelo de lenguaje más popular y versátil.",
-    tip: "Usa instrucciones personalizadas para adaptar su tono.",
-    prompt: "Actúa como un experto en marketing y crea una estrategia...",
-    image: "https://www.google.com/s2/favicons?domain=openai.com&sz=128"
-  },
-  {
-    id: "claude",
-    name: "Claude 3",
-    category: "Chatbots",
-    popularity: 98,
-    website: "https://claude.ai",
-    description: "IA ética con gran ventana de contexto para leer libros enteros.",
-    tip: "Sube PDFs largos para que los resuma.",
-    prompt: "Analiza este documento y extrae los 5 puntos clave.",
-    image: "https://www.google.com/s2/favicons?domain=anthropic.com&sz=128"
-  },
-  {
-    id: "gemini",
-    name: "Google Gemini",
-    category: "Chatbots",
-    popularity: 97,
-    website: "https://gemini.google.com",
-    description: "La IA multimodal de Google conectada a internet.",
-    tip: "Úsalo para planificar viajes con Google Maps.",
-    prompt: "Busca los vuelos más baratos a Madrid para mayo.",
-    image: "https://www.google.com/s2/favicons?domain=google.com&sz=128"
-  },
-  {
-    id: "perplexity",
-    name: "Perplexity",
-    category: "Búsqueda",
-    popularity: 95,
-    website: "https://www.perplexity.ai",
-    description: "Buscador conversacional que cita sus fuentes.",
-    tip: "Ideal para investigación académica rápida.",
-    prompt: "¿Cuál es el estado del arte en computación cuántica?",
-    image: "https://www.google.com/s2/favicons?domain=perplexity.ai&sz=128"
-  },
-  {
-    id: "copilot",
-    name: "Microsoft Copilot",
-    category: "Productividad",
-    popularity: 96,
-    website: "https://copilot.microsoft.com",
-    description: "Tu asistente IA integrado en Windows y Office.",
-    tip: "Pídele generar imágenes con DALL-E 3 gratis.",
-    prompt: "Crea una imagen de un gato astronauta.",
-    image: "https://www.google.com/s2/favicons?domain=microsoft.com&sz=128"
-  },
-
-  // --- IMÁGENES & ARTE ---
-  {
-    id: "midjourney",
-    name: "Midjourney",
-    category: "Imágenes",
-    popularity: 99,
-    website: "https://www.midjourney.com",
-    description: "La mejor calidad artística y fotorealismo del mercado.",
-    tip: "Usa '--v 6' para el modelo más reciente.",
-    prompt: "Retrato cinemático de una mujer cyberpunk, luces neón.",
-    image: "https://www.google.com/s2/favicons?domain=midjourney.com&sz=128"
-  },
-  {
-    id: "dalle3",
-    name: "DALL·E 3",
-    category: "Imágenes",
-    popularity: 98,
-    website: "https://openai.com/dall-e-3",
-    description: "Generación de imágenes que sigue instrucciones precisas.",
-    tip: "Pídele incluir texto exacto en la imagen.",
-    prompt: "Un cartel que diga 'HOLA MUNDO' en estilo retro.",
-    image: "https://www.google.com/s2/favicons?domain=openai.com&sz=128"
-  },
-  {
-    id: "stablediffusion",
-    name: "Stable Diffusion",
-    category: "Imágenes",
-    popularity: 97,
-    website: "https://stability.ai",
-    description: "Modelo open-source potente y personalizable.",
-    tip: "Úsalo localmente para privacidad total.",
-    prompt: "Paisaje de fantasía estilo Ghibli, 8k.",
-    image: "https://www.google.com/s2/favicons?domain=stability.ai&sz=128"
-  },
-  {
-    id: "leonardo",
-    name: "Leonardo.ai",
-    category: "Imágenes",
+    id: "bubble",
+    name: "Bubble",
+    category: "Web",
     popularity: 94,
-    website: "https://leonardo.ai",
-    description: "Generación de assets para juegos y arte conceptual.",
-    tip: "Entrena tus propios modelos con tus fotos.",
-    prompt: "Icono de poción mágica para RPG, fondo transparente.",
-    image: "https://www.google.com/s2/favicons?domain=leonardo.ai&sz=128"
+    website: "https://bubble.io",
+    description: "La plataforma no-code más potente.",
+    tip: "Usa plugins de IA para potenciar tu app.",
+    prompt: "Crea un marketplace tipo Airbnb.",
+    image: "https://www.google.com/s2/favicons?domain=bubble.io&sz=128"
   },
   {
-    id: "adobe_firefly",
-    name: "Adobe Firefly",
-    category: "Imágenes",
+    id: "flutterflow",
+    name: "FlutterFlow AI",
+    category: "Web",
     popularity: 93,
-    website: "https://firefly.adobe.com",
-    description: "IA generativa segura para uso comercial.",
-    tip: "Úsalo para rellenar fondos en Photoshop.",
-    prompt: "Expande esta imagen hacia los lados de forma natural.",
-    image: "https://www.google.com/s2/favicons?domain=adobe.com&sz=128"
+    website: "https://flutterflow.io",
+    description: "Crea apps nativas (iOS/Android) visualmente.",
+    tip: "Genera código de pantalla con texto.",
+    prompt: "Pantalla de login moderna oscura.",
+    image: "https://www.google.com/s2/favicons?domain=flutterflow.io&sz=128"
   },
   {
-    id: "clipdrop",
-    name: "Clipdrop",
-    category: "Edición",
-    popularity: 90,
-    website: "https://clipdrop.co",
-    description: "Suite de herramientas mágicas para editar fotos.",
-    tip: "Prueba la herramienta 'Relight' para cambiar la iluminación.",
-    prompt: "Cambia la luz para que venga desde la derecha en azul.",
-    image: "https://www.google.com/s2/favicons?domain=clipdrop.co&sz=128"
-  },
-  {
-    id: "magnific",
-    name: "Magnific AI",
-    category: "Edición",
-    popularity: 89,
-    website: "https://magnific.ai",
-    description: "Upscaler que inventa detalles realistas.",
-    tip: "Sube la 'creatividad' para añadir texturas nuevas.",
-    prompt: "Mejora esta foto borrosa a 4K con texturas de piel.",
-    image: "https://www.google.com/s2/favicons?domain=magnific.ai&sz=128"
-  },
-  {
-    id: "krea",
-    name: "KREA",
-    category: "Imágenes",
-    popularity: 88,
-    website: "https://krea.ai",
-    description: "Generación en tiempo real mientras dibujas.",
-    tip: "Dibuja formas básicas y mira cómo se vuelven reales.",
-    prompt: "Convierte este garabato en una manzana realista.",
-    image: "https://www.google.com/s2/favicons?domain=krea.ai&sz=128"
-  },
-  {
-    id: "ideogram",
-    name: "Ideogram",
-    category: "Imágenes",
+    id: "typeform_ai",
+    name: "Typeform AI",
+    category: "Productividad",
     popularity: 91,
-    website: "https://ideogram.ai",
-    description: "Experto en generar tipografía y logos.",
-    tip: "Ideal para diseños de camisetas y pegatinas.",
-    prompt: "Logo vectorial de un zorro con el texto 'FOXY'.",
-    image: "https://www.google.com/s2/favicons?domain=ideogram.ai&sz=128"
+    website: "https://typeform.com",
+    description: "Formularios inteligentes que se crean solos.",
+    tip: "Analiza las respuestas con IA.",
+    prompt: "Crea un formulario de feedback cliente.",
+    image: "https://www.google.com/s2/favicons?domain=typeform.com&sz=128"
   },
   {
-    id: "playground",
-    name: "Playground AI",
-    category: "Imágenes",
-    popularity: 87,
-    website: "https://playgroundai.com",
-    description: "Editor gráfico colaborativo con IA.",
-    tip: "Mezcla filtros para estilos únicos.",
-    prompt: "Retrato de moda, estilo revista Vogue.",
-    image: "https://www.google.com/s2/favicons?domain=playgroundai.com&sz=128"
-  },
-
-  // --- VIDEO & ANIMACIÓN ---
-  {
-    id: "sora",
-    name: "Sora",
-    category: "Video",
-    popularity: 100,
-    website: "https://openai.com/sora",
-    description: "Modelo de texto a video hiperrealista (Próximamente).",
-    tip: "Describe movimientos de cámara complejos.",
-    prompt: "Drone view of waves crashing against cliffs at Big Sur.",
-    image: "https://www.google.com/s2/favicons?domain=openai.com&sz=128"
-  },
-  {
-    id: "runway_gen2",
-    name: "Runway Gen-2",
-    category: "Video",
-    popularity: 95,
-    website: "https://runwayml.com",
-    description: "El estándar en generación de video comercial.",
-    tip: "Usa 'Motion Brush' para animar zonas específicas.",
-    prompt: "Haz que las nubes se muevan rápido en este paisaje.",
-    image: "https://www.google.com/s2/favicons?domain=runwayml.com&sz=128"
-  },
-  {
-    id: "pika",
-    name: "Pika Art",
-    category: "Video",
-    popularity: 94,
-    website: "https://pika.art",
-    description: "Animación de video divertida y fácil.",
-    tip: "Usa 'Lip Sync' para hacer hablar a tus personajes.",
-    prompt: "Un conejo de dibujos animados hablando a la cámara.",
-    image: "https://www.google.com/s2/favicons?domain=pika.art&sz=128"
-  },
-  {
-    id: "heygen",
-    name: "HeyGen",
-    category: "Video",
-    popularity: 93,
-    website: "https://heygen.com",
-    description: "Avatares realistas para videos corporativos.",
-    tip: "Traduce tu video a otro idioma conservando tu voz.",
-    prompt: "Crea un video de bienvenida en japonés.",
-    image: "https://www.google.com/s2/favicons?domain=heygen.com&sz=128"
-  },
-  {
-    id: "synthesia",
-    name: "Synthesia",
-    category: "Video",
-    popularity: 92,
-    website: "https://synthesia.io",
-    description: "Presentadores IA para formación y e-learning.",
-    tip: "Crea tu propio avatar digital.",
-    prompt: "Video explicativo de seguridad laboral.",
-    image: "https://www.google.com/s2/favicons?domain=synthesia.io&sz=128"
-  },
-  {
-    id: "descript",
-    name: "Descript",
-    category: "Edición",
-    popularity: 91,
-    website: "https://descript.com",
-    description: "Edita video editando el texto.",
-    tip: "Borra las muletillas 'eh' y 'um' automáticamente.",
-    prompt: "Elimina los silencios de más de 3 segundos.",
-    image: "https://www.google.com/s2/favicons?domain=descript.com&sz=128"
-  },
-  {
-    id: "opusclip",
-    name: "Opus Clip",
-    category: "Video",
-    popularity: 90,
-    website: "https://opus.pro",
-    description: "Convierte videos largos en Shorts virales.",
-    tip: "Pone subtítulos animados automáticamente.",
-    prompt: "Saca 5 clips virales de este podcast de 1 hora.",
-    image: "https://www.google.com/s2/favicons?domain=opus.pro&sz=128"
-  },
-  {
-    id: "invideo",
-    name: "InVideo AI",
-    category: "Video",
-    popularity: 89,
-    website: "https://invideo.io",
-    description: "Crea videos completos con guion y stock desde texto.",
-    tip: "Ideal para canales de YouTube automatizados.",
-    prompt: "Video de 5 minutos sobre la historia de Roma.",
-    image: "https://www.google.com/s2/favicons?domain=invideo.io&sz=128"
-  },
-  {
-    id: "wonder_dynamics",
-    name: "Wonder Dynamics",
-    category: "VFX",
+    id: "landbot",
+    name: "Landbot AI",
+    category: "Chatbots",
     popularity: 88,
-    website: "https://wonderdynamics.com",
-    description: "Pon personajes CGI en videos reales automáticamente.",
-    tip: "No necesitas trajes de captura de movimiento.",
-    prompt: "Reemplaza al actor por un robot 3D.",
-    image: "https://www.google.com/s2/favicons?domain=wonderdynamics.com&sz=128"
-  },
-  {
-    id: "luma",
-    name: "Luma Dream Machine",
-    category: "Video",
-    popularity: 96,
-    website: "https://lumalabs.ai",
-    description: "Generación de video de alta calidad y velocidad.",
-    tip: "Crea loops perfectos para fondos.",
-    prompt: "Bucle infinito de un túnel fractal.",
-    image: "https://www.google.com/s2/favicons?domain=lumalabs.ai&sz=128"
-  },
-
-  // --- AUDIO & VOZ ---
-  {
-    id: "elevenlabs",
-    name: "ElevenLabs",
-    category: "Audio",
-    popularity: 98,
-    website: "https://elevenlabs.io",
-    description: "Las voces sintéticas más realistas del mundo.",
-    tip: "Clona tu propia voz con solo 1 minuto de audio.",
-    prompt: "Lee este cuento con voz de anciano sabio.",
-    image: "https://www.google.com/s2/favicons?domain=elevenlabs.io&sz=128"
-  },
-  {
-    id: "suno",
-    name: "Suno AI",
-    category: "Música",
-    popularity: 97,
-    website: "https://suno.com",
-    description: "Crea canciones completas con letra y voz (Radio Quality).",
-    tip: "Especifica el género musical detallado.",
-    prompt: "Canción de salsa sobre aprender a programar.",
-    image: "https://www.google.com/s2/favicons?domain=suno.com&sz=128"
-  },
-  {
-    id: "udio",
-    name: "Udio",
-    category: "Música",
-    popularity: 96,
-    website: "https://udio.com",
-    description: "Música generativa con alta fidelidad.",
-    tip: "Usa el modo manual para controlar la letra.",
-    prompt: "Tema de Jazz Lofi para estudiar.",
-    image: "https://www.google.com/s2/favicons?domain=udio.com&sz=128"
-  },
-  {
-    id: "murf",
-    name: "Murf AI",
-    category: "Audio",
-    popularity: 90,
-    website: "https://murf.ai",
-    description: "Estudio de voz en off versátil.",
-    tip: "Sincroniza la voz con tu presentación.",
-    prompt: "Narración profesional para video corporativo.",
-    image: "https://www.google.com/s2/favicons?domain=murf.ai&sz=128"
-  },
-  {
-    id: "adobe_podcast",
-    name: "Adobe Podcast",
-    category: "Audio",
-    popularity: 89,
-    website: "https://podcast.adobe.com",
-    description: "Mejora audio de mala calidad a estudio.",
-    tip: "Usa 'Enhance Speech' en grabaciones de celular.",
-    prompt: "Limpia este audio grabado en la calle.",
-    image: "https://www.google.com/s2/favicons?domain=adobe.com&sz=128"
-  },
-  {
-    id: "lalal",
-    name: "Lalal.ai",
-    category: "Audio",
-    popularity: 88,
-    website: "https://lalal.ai",
-    description: "Separa voces e instrumentos de cualquier canción.",
-    tip: "Ideal para karaoke o remixing.",
-    prompt: "Extrae solo la batería de esta canción.",
-    image: "https://www.google.com/s2/favicons?domain=lalal.ai&sz=128"
-  },
-  {
-    id: "soundraw",
-    name: "Soundraw",
-    category: "Música",
-    popularity: 87,
-    website: "https://soundraw.io",
-    description: "Generador de música de fondo libre de derechos.",
-    tip: "Ajusta la duración exacta para tu video.",
-    prompt: "Música épica de 3 minutos para trailer.",
-    image: "https://www.google.com/s2/favicons?domain=soundraw.io&sz=128"
-  },
-  {
-    id: "krisp",
-    name: "Krisp",
-    category: "Audio",
-    popularity: 86,
-    website: "https://krisp.ai",
-    description: "Elimina ruido de fondo en llamadas en tiempo real.",
-    tip: "Funciona con Zoom, Meet y Discord.",
-    prompt: "Silencia al perro ladrando en mi reunión.",
-    image: "https://www.google.com/s2/favicons?domain=krisp.ai&sz=128"
-  },
-  {
-    id: "otter",
-    name: "Otter.ai",
-    category: "Reuniones",
-    popularity: 91,
-    website: "https://otter.ai",
-    description: "Transcribe reuniones y toma notas automáticamente.",
-    tip: "Conecta tu calendario para que se una solo.",
-    prompt: "Resume los puntos de acción de la reunión.",
-    image: "https://www.google.com/s2/favicons?domain=otter.ai&sz=128"
-  },
-  {
-    id: "fireflies",
-    name: "Fireflies.ai",
-    category: "Reuniones",
-    popularity: 90,
-    website: "https://fireflies.ai",
-    description: "Inteligencia para tus conversaciones de voz.",
-    tip: "Busca palabras clave dentro de tus llamadas grabadas.",
-    prompt: "¿Cuándo mencionamos el presupuesto?",
-    image: "https://www.google.com/s2/favicons?domain=fireflies.ai&sz=128"
-  },
-
-  // --- PROGRAMACIÓN & CÓDIGO ---
+    website: "https://landbot.io",
+    description: "Constructor de chatbots visual (No-Code).",
+    tip: "Convierte leads en WhatsApp.",
+    prompt: "Crea un bot para reservar citas.",
+    image: "https://www.google.com/s2/favicons?domain=landbot.io&sz=128"
+  },// --- 💻 PROGRAMACIÓN & CÓDIGO ---
   {
     id: "github_copilot",
     name: "GitHub Copilot",
@@ -1145,17 +970,6 @@ export const AI_TOOLS_DATA = [
     image: "https://www.google.com/s2/favicons?domain=warp.dev&sz=128"
   },
   {
-    id: "phind",
-    name: "Phind",
-    category: "Búsqueda",
-    popularity: 89,
-    website: "https://www.phind.com",
-    description: "Buscador optimizado para desarrolladores.",
-    tip: "Úsalo para encontrar documentación técnica actualizada.",
-    prompt: "¿Cómo centro un div en CSS Grid en 2024?",
-    image: "https://www.google.com/s2/favicons?domain=phind.com&sz=128"
-  },
-  {
     id: "mintlify",
     name: "Mintlify",
     category: "Código",
@@ -1178,73 +992,64 @@ export const AI_TOOLS_DATA = [
     image: "https://www.google.com/s2/favicons?domain=figma.com&sz=128"
   },
 
-  // --- PRODUCTIVIDAD & ESCRITURA (Parte 1) ---
+  // --- 🌐 WEB & NO-CODE ---
   {
-    id: "notion_ai",
-    name: "Notion AI",
-    category: "Productividad",
-    popularity: 98,
-    website: "https://notion.so",
-    description: "IA integrada en tu espacio de trabajo.",
-    tip: "Pídele mejorar tu escritura o resumir tablas.",
-    prompt: "Convierte estas notas desordenadas en una tabla.",
-    image: "https://www.google.com/s2/favicons?domain=notion.so&sz=128"
-  },
-  {
-    id: "grammarly",
-    name: "Grammarly",
-    category: "Escritura",
-    popularity: 99,
-    website: "https://grammarly.com",
-    description: "Corrector y asistente de escritura avanzado.",
-    tip: "Ajusta el tono para sonar más profesional o amigable.",
-    prompt: "Reescribe este correo para que suene más formal.",
-    image: "https://www.google.com/s2/favicons?domain=grammarly.com&sz=128"
-  },
-  {
-    id: "jasper",
-    name: "Jasper",
-    category: "Marketing",
-    popularity: 96,
-    website: "https://jasper.ai",
-    description: "Redacción de contenido para empresas y marcas.",
-    tip: "Entrénalo con la voz de tu marca.",
-    prompt: "Escribe un post de blog sobre café de especialidad.",
-    image: "https://www.google.com/s2/favicons?domain=jasper.ai&sz=128"
-  },
-  {
-    id: "copyai",
-    name: "Copy.ai",
-    category: "Marketing",
-    popularity: 95,
-    website: "https://copy.ai",
-    description: "Generación masiva de copys y correos.",
-    tip: "Usa los workflows para automatizar campañas enteras.",
-    prompt: "Genera 10 asuntos de email para Black Friday.",
-    image: "https://www.google.com/s2/favicons?domain=copy.ai&sz=128"
-  },
-  {
-    id: "quillbot",
-    name: "Quillbot",
-    category: "Escritura",
+    id: "bubble",
+    name: "Bubble",
+    category: "Web",
     popularity: 94,
-    website: "https://quillbot.com",
-    description: "Parafraseador excelente para evitar plagio.",
-    tip: "Úsalo para simplificar textos complejos.",
-    prompt: "Reescribe este párrafo académico para niños.",
-    image: "https://www.google.com/s2/favicons?domain=quillbot.com&sz=128"
+    website: "https://bubble.io",
+    description: "La plataforma no-code más potente.",
+    tip: "Usa plugins de IA para potenciar tu app.",
+    prompt: "Crea un marketplace tipo Airbnb.",
+    image: "https://www.google.com/s2/favicons?domain=bubble.io&sz=128"
   },
   {
-    id: "deepl",
-    name: "DeepL",
-    category: "Productividad",
-    popularity: 97,
-    website: "https://deepl.com",
-    description: "El traductor más preciso y natural.",
-    tip: "Usa 'DeepL Write' para corregir estilo.",
-    prompt: "Traduce este contrato legal al inglés.",
-    image: "https://www.google.com/s2/favicons?domain=deepl.com&sz=128"
+    id: "flutterflow",
+    name: "FlutterFlow AI",
+    category: "Web",
+    popularity: 93,
+    website: "https://flutterflow.io",
+    description: "Crea apps nativas (iOS/Android) visualmente.",
+    tip: "Genera código de pantalla con texto.",
+    prompt: "Pantalla de login moderna oscura.",
+    image: "https://www.google.com/s2/favicons?domain=flutterflow.io&sz=128"
   },
+  {
+    id: "softr",
+    name: "Softr AI",
+    category: "Web",
+    popularity: 90,
+    website: "https://softr.io",
+    description: "Crea apps web desde Airtable/Google Sheets.",
+    tip: "Genera la app entera con un prompt.",
+    prompt: "Directorio de empleados con Airtable.",
+    image: "https://www.google.com/s2/favicons?domain=softr.io&sz=128"
+  },
+  {
+    id: "landbot",
+    name: "Landbot AI",
+    category: "Chatbots",
+    popularity: 88,
+    website: "https://landbot.io",
+    description: "Constructor de chatbots visual (No-Code).",
+    tip: "Convierte leads en WhatsApp.",
+    prompt: "Crea un bot para reservar citas.",
+    image: "https://www.google.com/s2/favicons?domain=landbot.io&sz=128"
+  },
+  {
+    id: "typeform_ai",
+    name: "Typeform AI",
+    category: "Productividad",
+    popularity: 91,
+    website: "https://typeform.com",
+    description: "Formularios inteligentes que se crean solos.",
+    tip: "Analiza las respuestas con IA.",
+    prompt: "Crea un formulario de feedback cliente.",
+    image: "https://www.google.com/s2/favicons?domain=typeform.com&sz=128"
+  },
+
+  // --- ⚡ AUTOMATIZACIÓN & SCRAPING ---
   {
     id: "zapier",
     name: "Zapier",
@@ -1268,128 +1073,40 @@ export const AI_TOOLS_DATA = [
     image: "https://www.google.com/s2/favicons?domain=make.com&sz=128"
   },
   {
-    id: "chatpdf",
-    name: "ChatPDF",
+    id: "browse_ai",
+    name: "Browse AI",
+    category: "Automatización",
+    popularity: 91,
+    website: "https://browse.ai",
+    description: "Extrae datos de cualquier sitio web fácilmente.",
+    tip: "Monitoriza cambios en webs de la competencia.",
+    prompt: "Monitoriza el precio de este producto.",
+    image: "https://www.google.com/s2/favicons?domain=browse.ai&sz=128"
+  },
+  {
+    id: "harpa",
+    name: "Harpa AI",
     category: "Productividad",
-    popularity: 93,
-    website: "https://chatpdf.com",
-    description: "Habla con cualquier documento PDF.",
-    tip: "Sube contratos o papers para entenderlos rápido.",
-    prompt: "¿Cuáles son las cláusulas de rescisión aquí?",
-    image: "https://www.google.com/s2/favicons?domain=chatpdf.com&sz=128"
-  },
-  {
-    id: "gamma",
-    name: "Gamma",
-    category: "Presentaciones",
-    popularity: 92,
-    website: "https://gamma.app",
-    description: "Crea presentaciones bonitas escribiendo texto.",
-    tip: "Exporta a PowerPoint o presenta desde la web.",
-    prompt: "Crea una presentación sobre el cambio climático.",
-    image: "https://www.google.com/s2/favicons?domain=gamma.app&sz=128"
-  },
-  {
-    id: "tome",
-    name: "Tome",
-    category: "Presentaciones",
-    popularity: 90,
-    website: "https://tome.app",
-    description: "Storytelling y slides generados por IA.",
-    tip: "Genera imágenes para tus slides automáticamente.",
-    prompt: "Pitch deck para una startup de zapatos.",
-    image: "https://www.google.com/s2/favicons?domain=tome.app&sz=128"
-  },
-  {
-    id: "beautiful_ai",
-    name: "Beautiful.ai",
-    category: "Presentaciones",
     popularity: 89,
-    website: "https://beautiful.ai",
-    description: "Diseño de diapositivas inteligente y automático.",
-    tip: "Se ajusta solo si cambias el contenido.",
-    prompt: "Slide de gráfico de barras comparativo.",
-    image: "https://www.google.com/s2/favicons?domain=beautiful.ai&sz=128"
+    website: "https://harpa.ai",
+    description: "Agente web híbrido para automatización.",
+    tip: "Rastrea precios y automatiza clicks.",
+    prompt: "Avísame si baja el precio.",
+    image: "https://www.google.com/s2/favicons?domain=harpa.ai&sz=128"
   },
   {
-    id: "canva_magic",
-    name: "Canva Magic",
-    category: "Diseño",
-    popularity: 99,
-    website: "https://canva.com",
-    description: "Suite completa de IA dentro de Canva.",
-    tip: "Usa 'Magic Switch' para cambiar formatos.",
-    prompt: "Diseña un post de Instagram para el día de la madre.",
-    image: "https://www.google.com/s2/favicons?domain=canva.com&sz=128"
-  },
-  {
-    id: "rewind_ai",
-    name: "Rewind",
-    category: "Productividad",
-    popularity: 88,
-    website: "https://rewind.ai",
-    description: "El buscador para tu vida (graba tu pantalla).",
-    tip: "Encuentra algo que viste hace semanas.",
-    prompt: "¿Qué video de YouTube vi ayer sobre cocina?",
-    image: "https://www.google.com/s2/favicons?domain=rewind.ai&sz=128"
-  },
-  {
-    id: "mem",
-    name: "Mem",
-    category: "Productividad",
+    id: "kadoa",
+    name: "Kadoa",
+    category: "Data",
     popularity: 87,
-    website: "https://mem.ai",
-    description: "Notas que se organizan solas.",
-    tip: "Conecta tu email y calendario.",
-    prompt: "¿Cuándo es mi reunión con Juan?",
-    image: "https://www.google.com/s2/favicons?domain=mem.ai&sz=128"
+    website: "https://kadoa.com",
+    description: "Web scraping con IA sin mantenimiento.",
+    tip: "Extrae datos no estructurados.",
+    prompt: "Extrae todos los productos de esta tienda.",
+    image: "https://www.google.com/s2/favicons?domain=kadoa.com&sz=128"
   },
 
-  // --- VENTAS & CLIENTES ---
-  {
-    id: "salesforce",
-    name: "Salesforce Einstein",
-    category: "Ventas",
-    popularity: 95,
-    website: "https://salesforce.com",
-    description: "CRM inteligente predictivo.",
-    tip: "Predice qué leads van a comprar.",
-    prompt: "Analiza el forecast de ventas.",
-    image: "https://www.google.com/s2/favicons?domain=salesforce.com&sz=128"
-  },
-  {
-    id: "gong",
-    name: "Gong.io",
-    category: "Ventas",
-    popularity: 93,
-    website: "https://gong.io",
-    description: "Analiza llamadas de ventas para mejorar cierres.",
-    tip: "Descubre por qué pierdes clientes.",
-    prompt: "¿Qué objeciones son las más comunes?",
-    image: "https://www.google.com/s2/favicons?domain=gong.io&sz=128"
-  },
-  {
-    id: "apollo",
-    name: "Apollo.io",
-    category: "Ventas",
-    popularity: 94,
-    website: "https://apollo.io",
-    description: "Base de datos B2B y engagement.",
-    tip: "Automatiza secuencias de emails.",
-    prompt: "Encuentra emails de CEOs en Madrid.",
-    image: "https://www.google.com/s2/favicons?domain=apollo.io&sz=128"
-  },
-  {
-    id: "instantly",
-    name: "Instantly",
-    category: "Ventas",
-    popularity: 91,
-    website: "https://instantly.ai",
-    description: "Email outreach que escala sin ir a spam.",
-    tip: "Usa el 'Warmup' automático.",
-    prompt: "Redacta secuencia de cold email.",
-    image: "https://www.google.com/s2/favicons?domain=instantly.ai&sz=128"
-  },
+  // --- 📈 VENTAS & CLIENTES (Adicionales) ---
   {
     id: "lemlist",
     name: "Lemlist",
@@ -1456,52 +1173,6 @@ export const AI_TOOLS_DATA = [
     prompt: "Busca las últimas noticias de esta empresa.",
     image: "https://www.google.com/s2/favicons?domain=clay.com&sz=128"
   },
-
-  // --- RECURSOS HUMANOS & LEGAL ---
-  {
-    id: "recruitee",
-    name: "Recruitee",
-    category: "RRHH",
-    popularity: 85,
-    website: "https://recruitee.com",
-    description: "ATS colaborativo con automatización.",
-    tip: "Publica en múltiples job boards.",
-    prompt: "Redacta oferta de trabajo para Senior Dev.",
-    image: "https://www.google.com/s2/favicons?domain=recruitee.com&sz=128"
-  },
-  {
-    id: "textio",
-    name: "Textio",
-    category: "RRHH",
-    popularity: 86,
-    website: "https://textio.com",
-    description: "Escritura inclusiva para ofertas de trabajo.",
-    tip: "Elimina sesgos inconscientes.",
-    prompt: "Haz esta oferta más inclusiva.",
-    image: "https://www.google.com/s2/favicons?domain=textio.com&sz=128"
-  },
-  {
-    id: "harvey",
-    name: "Harvey AI",
-    category: "Legal",
-    popularity: 90,
-    website: "https://harvey.ai",
-    description: "IA para firmas de abogados.",
-    tip: "Analiza contratos complejos.",
-    prompt: "Busca precedentes legales.",
-    image: "https://www.google.com/s2/favicons?domain=harvey.ai&sz=128"
-  },
-  {
-    id: "casetext",
-    name: "Casetext",
-    category: "Legal",
-    popularity: 89,
-    website: "https://casetext.com",
-    description: "CoCounsel, asistente legal confiable.",
-    tip: "Revisa documentos legales rápido.",
-    prompt: "Resume esta deposición.",
-    image: "https://www.google.com/s2/favicons?domain=casetext.com&sz=128"
-  },
   {
     id: "patentpal",
     name: "PatentPal",
@@ -1514,7 +1185,7 @@ export const AI_TOOLS_DATA = [
     image: "https://www.google.com/s2/favicons?domain=patentpal.com&sz=128"
   },
 
-  // --- HERRAMIENTAS CREATIVAS Y VARIAS ---
+  // --- 🧪 EXPERIMENTOS, COMUNIDAD & VARIOS ---
   {
     id: "skybox",
     name: "Blockade Labs",
@@ -1538,39 +1209,6 @@ export const AI_TOOLS_DATA = [
     image: "https://www.google.com/s2/favicons?domain=civitai.com&sz=128"
   },
   {
-    id: "hugging_chat",
-    name: "HuggingChat",
-    category: "Chatbots",
-    popularity: 88,
-    website: "https://huggingface.co/chat",
-    description: "La alternativa open source a ChatGPT.",
-    tip: "Prueba los últimos modelos abiertos como Llama 3.",
-    prompt: "Prueba modelo Llama 3 70B.",
-    image: "https://www.google.com/s2/favicons?domain=huggingface.co&sz=128"
-  },
-  {
-    id: "poe",
-    name: "Poe",
-    category: "Chatbots",
-    popularity: 93,
-    website: "https://poe.com",
-    description: "Todos los chatbots en una sola app (Quora).",
-    tip: "Crea tus propios bots personalizados.",
-    prompt: "Habla con GPT-4 y Claude a la vez.",
-    image: "https://www.google.com/s2/favicons?domain=poe.com&sz=128"
-  },
-  {
-    id: "pi",
-    name: "Pi (Inflection)",
-    category: "Chatbots",
-    popularity: 90,
-    website: "https://pi.ai",
-    description: "El chatbot más empático y personal.",
-    tip: "Úsalo para desahogarte o pedir consejo.",
-    prompt: "Me siento estresado hoy.",
-    image: "https://www.google.com/s2/favicons?domain=pi.ai&sz=128"
-  },
-  {
     id: "character_ai",
     name: "Character.ai",
     category: "Entretenimiento",
@@ -1591,171 +1229,6 @@ export const AI_TOOLS_DATA = [
     tip: "Comunidad enfocada en estilo anime.",
     prompt: "Genera personaje estilo manga.",
     image: "https://www.google.com/s2/favicons?domain=yodayo.com&sz=128"
-  },
-  {
-    id: "tensor_art",
-    name: "Tensor.art",
-    category: "Imágenes",
-    popularity: 85,
-    website: "https://tensor.art",
-    description: "Generación de imágenes y host de modelos gratuito.",
-    tip: "Ejecuta Stable Diffusion gratis online.",
-    prompt: "Retrato realista.",
-    image: "https://www.google.com/s2/favicons?domain=tensor.art&sz=128"
-  },
-  {
-    id: "seaart",
-    name: "SeaArt",
-    category: "Imágenes",
-    popularity: 84,
-    website: "https://seaart.ai",
-    description: "Potente generador de imágenes asiático.",
-    tip: "Muchas herramientas de controlnet integradas.",
-    prompt: "Pose específica de personaje.",
-    image: "https://www.google.com/s2/favicons?domain=seaart.ai&sz=128"
-  },
-  {
-    id: "mage_space",
-    name: "Mage.space",
-    category: "Imágenes",
-    popularity: 87,
-    website: "https://mage.space",
-    description: "Generación rápida y sin censura (NSFW opcional).",
-    tip: "Modelos SDXL de alta velocidad.",
-    prompt: "Arte conceptual épico.",
-    image: "https://www.google.com/s2/favicons?domain=mage.space&sz=128"
-  },
-  {
-    id: "topaz_labs",
-    name: "Topaz Labs",
-    category: "Edición",
-    popularity: 89,
-    website: "https://topazlabs.com",
-    description: "Mejora de foto y video profesional.",
-    tip: "Gigapixel AI para escalar imágenes sin perder calidad.",
-    prompt: "Mejora este video antiguo.",
-    image: "https://www.google.com/s2/favicons?domain=topazlabs.com&sz=128"
-  },
-  {
-    id: "vanceai",
-    name: "VanceAI",
-    category: "Edición",
-    popularity: 86,
-    website: "https://vanceai.com",
-    description: "Herramientas de mejora de fotos online.",
-    tip: "Restaura fotos viejas.",
-    prompt: "Enfoca esta imagen borrosa.",
-    image: "https://www.google.com/s2/favicons?domain=vanceai.com&sz=128"
-  },
-  {
-    id: "palette",
-    name: "Palette.fm",
-    category: "Edición",
-    popularity: 88,
-    website: "https://palette.fm",
-    description: "Colorea fotos en blanco y negro.",
-    tip: "Elige diferentes filtros de colorización.",
-    prompt: "Colorea foto de mi abuela.",
-    image: "https://www.google.com/s2/favicons?domain=palette.fm&sz=128"
-  },
-  {
-    id: "watermark_remover",
-    name: "Watermark Remover",
-    category: "Edición",
-    popularity: 90,
-    website: "https://watermarkremover.io",
-    description: "Elimina marcas de agua con IA.",
-    tip: "Funciona mejor en fondos simples.",
-    prompt: "Quita la marca de agua.",
-    image: "https://www.google.com/s2/favicons?domain=watermarkremover.io&sz=128"
-  },
-  {
-    id: "cleanup_pictures",
-    name: "Cleanup.pictures",
-    category: "Edición",
-    popularity: 92,
-    website: "https://cleanup.pictures",
-    description: "Elimina objetos no deseados de fotos.",
-    tip: "Inpainting muy rápido y gratuito.",
-    prompt: "Borra al turista del fondo.",
-    image: "https://www.google.com/s2/favicons?domain=cleanup.pictures&sz=128"
-  },
-  {
-    id: "pfpmaker",
-    name: "PFPMaker",
-    category: "Diseño",
-    popularity: 89,
-    website: "https://pfpmaker.com",
-    description: "Crea fotos de perfil profesionales gratis.",
-    tip: "Sube tu selfie y elige fondo.",
-    prompt: "Foto perfil LinkedIn.",
-    image: "https://www.google.com/s2/favicons?domain=pfpmaker.com&sz=128"
-  },
-  {
-    id: "brandcrowd",
-    name: "BrandCrowd",
-    category: "Diseño",
-    popularity: 85,
-    website: "https://brandcrowd.com",
-    description: "Creador de logos.",
-    tip: "Edita los vectores.",
-    prompt: "Logo de gimnasio.",
-    image: "https://www.google.com/s2/favicons?domain=brandcrowd.com&sz=128"
-  },
-  {
-    id: "khroma",
-    name: "Khroma",
-    category: "Diseño",
-    popularity: 84,
-    website: "https://khroma.co",
-    description: "Paletas de colores personalizadas con IA.",
-    tip: "Aprende tus gustos de color.",
-    prompt: "Dame una paleta otoñal.",
-    image: "https://www.google.com/s2/favicons?domain=khroma.co&sz=128"
-  },
-  {
-    id: "fontjoy",
-    name: "Fontjoy",
-    category: "Diseño",
-    popularity: 83,
-    website: "https://fontjoy.com",
-    description: "Emparejamiento de fuentes con IA.",
-    tip: "Encuentra la pareja perfecta para tu título.",
-    prompt: "Combina fuentes para web moderna.",
-    image: "https://www.google.com/s2/favicons?domain=fontjoy.com&sz=128"
-  },
-  {
-    id: "autodraw",
-    name: "AutoDraw",
-    category: "Diseño",
-    popularity: 88,
-    website: "https://autodraw.com",
-    description: "Convierte garabatos en iconos (Google).",
-    tip: "Dibuja mal y obtén iconos bien hechos.",
-    prompt: "Dibuja una bicicleta.",
-    image: "https://www.google.com/s2/favicons?domain=autodraw.com&sz=128"
-  },
-  {
-    id: "scribble_diffusion",
-    name: "Scribble Diffusion",
-    category: "Imágenes",
-    popularity: 87,
-    website: "https://scribblediffusion.com",
-    description: "Convierte bocetos en imágenes realistas.",
-    tip: "Dibuja el contorno y describe el resultado.",
-    prompt: "Gato dibujado a mano -> Foto real.",
-    image: "https://www.google.com/s2/favicons?domain=scribblediffusion.com&sz=128"
-  },
-  {
-    id: "magic_eraser",
-    name: "Magic Eraser",
-    category: "Edición",
-    popularity: 91,
-    website: "https://magicstudio.com/magiceraser",
-    description: "Borrador mágico simple y efectivo.",
-    tip: "Limpia tus fotos de producto.",
-    prompt: "Borra la mancha de la camisa.",
-    image: "https://www.google.com/s2/favicons?domain=magicstudio.com&sz=128"
   },
   {
     id: "thing_translator",
@@ -1788,17 +1261,6 @@ export const AI_TOOLS_DATA = [
     description: "Tetris de asociación de palabras con IA.",
     tip: "Juego adictivo de Google.",
     prompt: "Juega Semantris.",
-    image: "https://www.google.com/s2/favicons?domain=google.com&sz=128"
-  },
-  {
-    id: "talk_to_books",
-    name: "Talk to Books",
-    category: "Búsqueda",
-    popularity: 86,
-    website: "https://books.google.com/talktobooks",
-    description: "Busca citas en libros usando lenguaje natural.",
-    tip: "Encuentra sabiduría en libros.",
-    prompt: "¿Qué dicen los libros sobre el amor?",
     image: "https://www.google.com/s2/favicons?domain=google.com&sz=128"
   },
   {
@@ -1912,160 +1374,6 @@ export const AI_TOOLS_DATA = [
     image: "https://www.google.com/s2/favicons?domain=theresanaiforthat.com&sz=128"
   },
   {
-    id: "browse_ai",
-    name: "Browse AI",
-    category: "Automatización",
-    popularity: 91,
-    website: "https://browse.ai",
-    description: "Extrae datos de cualquier sitio web fácilmente.",
-    tip: "Monitoriza cambios en webs de la competencia.",
-    prompt: "Monitoriza el precio de este producto.",
-    image: "https://www.google.com/s2/favicons?domain=browse.ai&sz=128"
-  },
-  {
-    id: "merlin",
-    name: "Merlin",
-    category: "Productividad",
-    popularity: 90,
-    website: "https://getmerlin.in",
-    description: "Extensión de Chrome con GPT-4 en todas partes.",
-    tip: "Responde emails y resume videos de YouTube.",
-    prompt: "Resume este video de 20 minutos.",
-    image: "https://www.google.com/s2/favicons?domain=getmerlin.in&sz=128"
-  },
-  {
-    id: "harpa",
-    name: "Harpa AI",
-    category: "Productividad",
-    popularity: 89,
-    website: "https://harpa.ai",
-    description: "Agente web híbrido para automatización.",
-    tip: "Rastrea precios y automatiza clicks.",
-    prompt: "Avísame si baja el precio.",
-    image: "https://www.google.com/s2/favicons?domain=harpa.ai&sz=128"
-  },
-  {
-    id: "you",
-    name: "You.com",
-    category: "Búsqueda",
-    popularity: 92,
-    website: "https://you.com",
-    description: "Buscador con chat IA integrado.",
-    tip: "Usa modos 'Genius' para respuestas complejas.",
-    prompt: "Escribe código Python para scraping.",
-    image: "https://www.google.com/s2/favicons?domain=you.com&sz=128"
-  },
-  {
-    id: "kadoa",
-    name: "Kadoa",
-    category: "Data",
-    popularity: 87,
-    website: "https://kadoa.com",
-    description: "Web scraping con IA sin mantenimiento.",
-    tip: "Extrae datos no estructurados.",
-    prompt: "Extrae todos los productos de esta tienda.",
-    image: "https://www.google.com/s2/favicons?domain=kadoa.com&sz=128"
-  },
-  {
-    id: "landbot",
-    name: "Landbot AI",
-    category: "Chatbots",
-    popularity: 88,
-    website: "https://landbot.io",
-    description: "Constructor de chatbots visual (No-Code).",
-    tip: "Convierte leads en WhatsApp.",
-    prompt: "Crea un bot para reservar citas.",
-    image: "https://www.google.com/s2/favicons?domain=landbot.io&sz=128"
-  },
-  {
-    id: "typeform_ai",
-    name: "Typeform AI",
-    category: "Productividad",
-    popularity: 91,
-    website: "https://typeform.com",
-    description: "Formularios inteligentes que se crean solos.",
-    tip: "Analiza las respuestas con IA.",
-    prompt: "Crea un formulario de feedback cliente.",
-    image: "https://www.google.com/s2/favicons?domain=typeform.com&sz=128"
-  },
-  {
-    id: "softr",
-    name: "Softr AI",
-    category: "Web",
-    popularity: 90,
-    website: "https://softr.io",
-    description: "Crea apps web desde Airtable/Google Sheets.",
-    tip: "Genera la app entera con un prompt.",
-    prompt: "Directorio de empleados con Airtable.",
-    image: "https://www.google.com/s2/favicons?domain=softr.io&sz=128"
-  },
-  {
-    id: "bubble",
-    name: "Bubble",
-    category: "Web",
-    popularity: 94,
-    website: "https://bubble.io",
-    description: "La plataforma no-code más potente.",
-    tip: "Usa plugins de IA para potenciar tu app.",
-    prompt: "Crea un marketplace tipo Airbnb.",
-    image: "https://www.google.com/s2/favicons?domain=bubble.io&sz=128"
-  },
-  {
-    id: "flutterflow",
-    name: "FlutterFlow AI",
-    category: "Web",
-    popularity: 93,
-    website: "https://flutterflow.io",
-    description: "Crea apps nativas (iOS/Android) visualmente.",
-    tip: "Genera código de pantalla con texto.",
-    prompt: "Pantalla de login moderna oscura.",
-    image: "https://www.google.com/s2/favicons?domain=flutterflow.io&sz=128"
-  },
-  {
-    id: "vidyo",
-    name: "Vidyo.ai",
-    category: "Video",
-    popularity: 89,
-    website: "https://vidyo.ai",
-    description: "Recorta videos largos para TikTok/Reels.",
-    tip: "Plantillas automáticas para subtítulos.",
-    prompt: "Haz shorts de este podcast.",
-    image: "https://www.google.com/s2/favicons?domain=vidyo.ai&sz=128"
-  },
-  {
-    id: "munch",
-    name: "Munch",
-    category: "Video",
-    popularity: 88,
-    website: "https://getmunch.com",
-    description: "Extrae los clips más 'engageable' con IA.",
-    tip: "Analiza tendencias de palabras clave.",
-    prompt: "Busca clips virales de esta entrevista.",
-    image: "https://www.google.com/s2/favicons?domain=getmunch.com&sz=128"
-  },
-  {
-    id: "rask",
-    name: "Rask.ai",
-    category: "Video",
-    popularity: 92,
-    website: "https://rask.ai",
-    description: "Doblage y traducción de video automática.",
-    tip: "Clona tu voz en otro idioma.",
-    prompt: "Traduce mi video al alemán.",
-    image: "https://www.google.com/s2/favicons?domain=rask.ai&sz=128"
-  },
-  {
-    id: "d_id",
-    name: "D-ID",
-    category: "Video",
-    popularity: 91,
-    website: "https://d-id.com",
-    description: "Anima fotos para que hablen.",
-    tip: "Ideal para avatares históricos.",
-    prompt: "Haz que la Mona Lisa salude.",
-    image: "https://www.google.com/s2/favicons?domain=d-id.com&sz=128"
-  },
-  {
     id: "producthunt",
     name: "Product Hunt",
     category: "Comunidad",
@@ -2076,4 +1384,4 @@ export const AI_TOOLS_DATA = [
     prompt: "Ver lanzamientos de hoy.",
     image: "https://www.google.com/s2/favicons?domain=producthunt.com&sz=128"
   }
-];
+]; // FIN DEL ARRAY

@@ -29,9 +29,6 @@ import LegalModal from './components/LegalModal';
 import SplashScreen from './components/SplashScreen'; 
 import NewsBubble from './components/NewsBubble'; 
 
-// IMPORTAMOS EL COMPONENTE DE ADMINISTRACIÓN (NUEVO)
-import AdminUpload from './components/AdminUpload';
-
 // --- VISTAS ---
 import HomeView from './views/HomeView';
 import SubscriptionView from './views/SubscriptionView';
@@ -456,9 +453,6 @@ export default function App() {
         {showSplash && <SplashScreen finishAnimation={finishSplashAnimation} />}
         
         <NewsBubble news={liveNews} />
-
-        {/* --- COMPONENTE DE ADMINISTRACIÓN (BORRAR DESPUÉS DE USAR) --- */}
-        <AdminUpload />
 
       </div>
     </PayPalScriptProvider>
