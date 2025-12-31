@@ -39,11 +39,8 @@ const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID;
 // URLs DEL BACKEND
 const VERIFY_PAYPAL_URL = "https://us-central1-weberic-25da5.cloudfunctions.net/verifyPayPalEndpoint";
 
-// --- IDs DE PLANES DE PAYPAL ---
-// ID Mensual (Asegúrate que este también sea el correcto de tu panel, o usa el que tenías)
+// --- IDs DE PLANES DE PAYPAL ACTUALIZADOS ---
 const PAYPAL_PLAN_MONTHLY_ID = "P-5X729325VU782483PNFDX2WY"; 
-
-// ID Anual (EL QUE ACABAS DE DARME)
 const PAYPAL_PLAN_YEARLY_ID = "P-04Y821593A494293XNFJVYAA"; 
 
 // URL RSS NOTICIAS
@@ -75,8 +72,6 @@ export default function App() {
   // ESTADOS DE PAGO Y SUSCRIPCIÓN
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('mercadopago');
-  
-  // Estado para saber qué plan eligió el usuario ('monthly' o 'yearly')
   const [selectedPlanType, setSelectedPlanType] = useState('monthly'); 
 
   const [notification, setNotification] = useState(null);
@@ -102,7 +97,7 @@ export default function App() {
   useEffect(() => {
     const checkPaymentStatus = async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const preapproval_id = urlParams.get('preapproval_id'); // ID de suscripción MP
+      const preapproval_id = urlParams.get('preapproval_id'); 
       
       if (user && preapproval_id) {
         try {
@@ -125,7 +120,7 @@ export default function App() {
     if (!loadingCourses && user) checkPaymentStatus();
   }, [user, loadingCourses]); 
 
-  // CARGAR DATA (Cursos, Noticias, Auth)
+  // CARGAR DATA
   useEffect(() => { 
       const fetchCourses = async () => {
         try {
@@ -133,10 +128,7 @@ export default function App() {
             const coursesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setCourses(coursesData.length > 0 ? coursesData : ALL_COURSES);
             setLoadingCourses(false);
-        } catch (error) { 
-            setCourses(ALL_COURSES); 
-            setLoadingCourses(false); 
-        }
+        } catch (error) { setCourses(ALL_COURSES); setLoadingCourses(false); }
       };
       fetchCourses();
   }, []);
@@ -150,22 +142,16 @@ export default function App() {
           const formattedNews = data.items.map((item, index) => {
             const titleParts = item.title.split(' - ');
             const sourceName = titleParts.length > 1 ? titleParts.pop().trim() : "Tecnología";
-            const cleanTitle = titleParts.join(' - ');
             const realDomain = getSmartDomain(sourceName);
             return {
-              id: index,
-              title: cleanTitle, 
-              source: sourceName, 
-              category: "IA News",
-              date: item.pubDate.split(' ')[0],
-              description: "Noticia destacada. Toca para leer más en la fuente original.",
-              link: item.link,
+              id: index, title: titleParts.join(' - '), source: sourceName, category: "IA News",
+              date: item.pubDate.split(' ')[0], link: item.link,
               image: `https://www.google.com/s2/favicons?domain=${realDomain}&sz=128`
             };
           });
           setLiveNews(formattedNews); 
         }
-      } catch (error) { console.error("Error cargando noticias:", error); }
+      } catch (error) { console.error("Error news:", error); }
     };
     fetchNews();
   }, []);
@@ -201,74 +187,50 @@ export default function App() {
   const initiateSubscription = (planType = 'monthly') => {
     if (!user) { showNotification("Inicia sesión para suscribirte", "error"); handleLogin(); return; }
     setSelectedPlanType(planType); 
-    setPreferenceId(null);
-    setPaymentMethod('mercadopago');
     setShowPaymentModal(true);
   };
 
   const createPreference = async () => {
     setIsLoadingPayment(true);
-
     try {
-        // Enviar al backend qué plan queremos ('monthly' o 'yearly')
         const response = await fetch("https://us-central1-weberic-25da5.cloudfunctions.net/api/payment/create-subscription", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                userId: user.uid,     
-                email: user.email,
-                planType: selectedPlanType 
-            }),
+            body: JSON.stringify({ userId: user.uid, email: user.email, planType: selectedPlanType }),
         });
-
         const data = await response.json();
-
         if (data.init_point) {
             window.location.href = data.init_point; 
         } else {
-            console.error("Error del backend:", data);
-            showNotification("No se pudo generar el link de suscripción.", "error");
+            showNotification("No se pudo generar el link de pago.", "error");
             setIsLoadingPayment(false);
         }
     } catch (error) {
-        console.error("Error de conexión:", error);
-        showNotification("Error al conectar con el servidor de pagos.", "error");
+        showNotification("Error de conexión.", "error");
         setIsLoadingPayment(false);
     }
   };
 
-  const handlePayPalApprove = async (data, actions) => {
+  const handlePayPalApprove = async (data) => {
     try {
         setIsLoadingPayment(true);
         const response = await fetch(VERIFY_PAYPAL_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                userId: user.uid,
-                orderID: data.orderID,
-                subscriptionID: data.subscriptionID,
-                isSubscription: true,
-                planType: selectedPlanType 
+                userId: user.uid, orderID: data.orderID, subscriptionID: data.subscriptionID,
+                isSubscription: true, planType: selectedPlanType 
             })
         });
-
         const result = await response.json();
-
         if (result.success) {
             showNotification("¡Suscripción exitosa!", "success");
             setShowPaymentModal(false);
-        } else {
-            showNotification("El pago no pudo ser verificado.", "error");
-        }
-    } catch (err) { 
-        console.error(err);
-        showNotification("Error de comunicación.", "error"); 
-    } finally {
-        setIsLoadingPayment(false);
-    }
+        } else showNotification("El pago no pudo ser verificado.", "error");
+    } catch (err) { showNotification("Error de comunicación.", "error"); } 
+    finally { setIsLoadingPayment(false); }
   };
 
-  // Determinar ID de Plan de PayPal según selección
   const currentPayPalPlanId = selectedPlanType === 'yearly' ? PAYPAL_PLAN_YEARLY_ID : PAYPAL_PLAN_MONTHLY_ID;
 
   return (
@@ -288,111 +250,52 @@ export default function App() {
           <Route path="/noticias" element={<NewsView user={user} userData={userData} handleLogin={handleLogin} handleLogout={handleLogout} news={liveNews} />} />
           <Route path="/suscripcion" element={<SubscriptionView onSubscribe={initiateSubscription} isSubscribed={userData?.isSubscribed} user={user} handleLogin={handleLogin} handleLogout={handleLogout} userData={userData} />} />
           <Route path="/perfil" element={<ProfileView user={user} userData={userData} courses={courses} handleLogout={handleLogout} />} />
-          <Route path="/curso/:courseId" element={<CourseDetailView courses={courses} user={user} handleLogin={handleLogin} handlePayment={() => initiateSubscription('monthly')} handleLogout={handleLogout} userData={userData} openRefundModal={() => setShowRefundModal(true)} />} />
+          <Route path="/curso/:courseId" element={<CourseDetailView courses={courses} user={user} handleLogin={handleLogin} handlePayment={() => initiateSubscription('monthly')} handleLogout={handleLogout} userData={userData} openRefundModal={() => setLegalModalType('refund')} />} />
           <Route path="/herramienta/:toolId" element={<ToolDetailView user={user} handleLogin={handleLogin} handleLogout={handleLogout} userData={userData} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
-        {/* MODAL DE SUSCRIPCIÓN UNIFICADO */}
         {showPaymentModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#102A43]/90 backdrop-blur-md animate-fade-in-up">
             <div className={`${COLORS.bgCard} rounded-[2rem] shadow-2xl max-w-md w-full p-8 text-center relative border border-[#627D98] animate-pop-in max-h-[90vh] overflow-y-auto`}>
-              
-              <h3 className={`text-2xl font-black mb-2 ${COLORS.textLight}`}>
-                Elige tu Plan Premium
-              </h3>
-              <p className="text-[#829AB1] text-xs mb-6 font-medium">
-                Acceso ilimitado a todos los cursos y actualizaciones
-              </p>
+              <h3 className={`text-2xl font-black mb-2 ${COLORS.textLight}`}>Elige tu Plan Premium</h3>
+              <p className="text-[#829AB1] text-xs mb-6 font-medium">Acceso ilimitado a todos los cursos y actualizaciones</p>
 
-              {/* SELECTOR DE PLANES */}
               <div className="grid grid-cols-2 gap-4 mb-8">
-                 <button
-                    onClick={() => { setSelectedPlanType('monthly'); setPreferenceId(null); }}
-                    className={`p-4 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-1 ${
-                        selectedPlanType === 'monthly'
-                        ? 'border-[#F9703E] bg-[#F9703E]/10 shadow-[0_0_15px_rgba(249,112,62,0.3)] transform scale-105'
-                        : 'border-[#486581] hover:bg-[#334E68] opacity-70'
-                    }`}
-                 >
+                 <button onClick={() => setSelectedPlanType('monthly')} className={`p-4 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-1 ${selectedPlanType === 'monthly' ? 'border-[#F9703E] bg-[#F9703E]/10 scale-105' : 'border-[#486581] opacity-70'}`}>
                     <span className="text-xs text-[#BCCCDC] uppercase font-bold">Mensual</span>
                     <span className="text-xl font-black text-white">{formatCurrency(PLAN_MONTHLY_PRICE)}</span>
                  </button>
-
-                 <button
-                    onClick={() => { setSelectedPlanType('yearly'); setPreferenceId(null); }}
-                    className={`p-4 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-1 relative ${
-                        selectedPlanType === 'yearly'
-                        ? 'border-[#F9703E] bg-[#F9703E]/10 shadow-[0_0_15px_rgba(249,112,62,0.3)] transform scale-105'
-                        : 'border-[#486581] hover:bg-[#334E68] opacity-70'
-                    }`}
-                 >
-                    <div className="absolute -top-3 bg-[#48BB78] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-                        AHORRA 16%
-                    </div>
+                 <button onClick={() => setSelectedPlanType('yearly')} className={`p-4 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-1 relative ${selectedPlanType === 'yearly' ? 'border-[#F9703E] bg-[#F9703E]/10 scale-105' : 'border-[#486581] opacity-70'}`}>
+                    <div className="absolute -top-3 bg-[#48BB78] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">AHORRA 16%</div>
                     <span className="text-xs text-[#BCCCDC] uppercase font-bold">Anual</span>
                     <span className="text-xl font-black text-white">{formatCurrency(PLAN_YEARLY_PRICE)}</span>
                  </button>
               </div>
 
-              {/* SELECTOR DE MÉTODO DE PAGO */}
               <div className="flex gap-4 mb-6 justify-center">
-                <button
-                  onClick={() => { setPaymentMethod('mercadopago'); setPreferenceId(null); }}
-                  className={`py-2 px-4 rounded-xl border transition-all text-xs font-bold flex items-center gap-2 ${
-                    paymentMethod === 'mercadopago' 
-                      ? 'border-[#009EE3] text-[#009EE3] bg-[#009EE3]/10' 
-                      : 'border-[#486581] text-[#829AB1]'
-                  }`}
-                >
-                  <CreditCard size={16} /> Mercado Pago (S/.)
-                </button>
-
-                <button
-                  onClick={() => { setPaymentMethod('paypal'); setPreferenceId(null); }}
-                  className={`py-2 px-4 rounded-xl border transition-all text-xs font-bold flex items-center gap-2 ${
-                    paymentMethod === 'paypal' 
-                      ? 'border-[#FFC439] text-[#FFC439] bg-[#FFC439]/10' 
-                      : 'border-[#486581] text-[#829AB1]'
-                  }`}
-                >
-                  <span className="font-serif italic font-black">P</span> PayPal ($)
-                </button>
+                <button onClick={() => setPaymentMethod('mercadopago')} className={`py-2 px-4 rounded-xl border transition-all text-xs font-bold flex items-center gap-2 ${paymentMethod === 'mercadopago' ? 'border-[#009EE3] text-[#009EE3] bg-[#009EE3]/10' : 'border-[#486581] text-[#829AB1]'}`}><CreditCard size={16} /> Mercado Pago (S/.)</button>
+                <button onClick={() => setPaymentMethod('paypal')} className={`py-2 px-4 rounded-xl border transition-all text-xs font-bold flex items-center gap-2 ${paymentMethod === 'paypal' ? 'border-[#FFC439] text-[#FFC439] bg-[#FFC439]/10' : 'border-[#486581] text-[#829AB1]'}`}><span className="font-serif italic font-black">P</span> PayPal ($)</button>
               </div>
 
-              {/* ÁREA DE ACCIÓN DE PAGO */}
               <div className="min-h-[100px] flex flex-col justify-center">
                 {paymentMethod === 'mercadopago' ? (
                     <div className="animate-fade-in">
-                      <Button onClick={createPreference} variant="primary" className="w-full h-12 text-base shadow-lg bg-[#009EE3] hover:bg-[#007eb5] border-none text-white font-bold">
+                      <Button onClick={createPreference} variant="primary" className="w-full h-12 text-base shadow-lg bg-[#009EE3] border-none text-white font-bold">
                         {isLoadingPayment ? <Loader className="animate-spin mx-auto"/> : `Suscribirse ${selectedPlanType === 'monthly' ? 'Mensual' : 'Anual'}`}
                       </Button>
-                      <p className="text-[10px] text-[#829AB1] mt-3">
-                        Se cobrará en Soles peruanos automáticamente.
-                      </p>
+                      <p className="text-[10px] text-[#829AB1] mt-3">Cobro automático cada {selectedPlanType === 'monthly' ? 'mes' : 'año'}.</p>
                     </div>
                 ) : (
                   <div className="animate-fade-in w-full relative z-10">
-                    <PayPalButtons 
-                        key={`${selectedPlanType}-paypal`} 
-                        style={{ layout: "vertical", shape: "rect", color: "gold", label: "subscribe", height: 45 }} 
-                        createSubscription={(data, actions) => {
-                            return actions.subscription.create({
-                                'plan_id': currentPayPalPlanId 
-                            });
-                        }}
+                    <PayPalButtons key={`${selectedPlanType}-paypal`} style={{ layout: "vertical", shape: "rect", color: "gold", label: "subscribe", height: 45 }} 
+                        createSubscription={(data, actions) => actions.subscription.create({ 'plan_id': currentPayPalPlanId })}
                         onApprove={handlePayPalApprove}
                     />
-                    <p className="text-[10px] text-[#829AB1] mt-2">
-                        Pago internacional seguro en Dólares.
-                    </p>
                   </div>
                 )}
               </div>
-
-              <button onClick={() => setShowPaymentModal(false)} className={`w-full mt-6 text-xs font-bold ${COLORS.textMuted} hover:text-white transition-colors underline`}>
-                Cancelar
-              </button>
+              <button onClick={() => setShowPaymentModal(false)} className={`w-full mt-6 text-xs font-bold ${COLORS.textMuted} hover:text-white transition-colors underline`}>Cancelar</button>
             </div>
           </div>
         )}
@@ -400,7 +303,6 @@ export default function App() {
         <LegalModal type={legalModalType} onClose={() => setLegalModalType(null)} />
         {showSplash && <SplashScreen finishAnimation={finishSplashAnimation} />}
         <NewsBubble news={liveNews} />
-
       </div>
     </PayPalScriptProvider>
   );
