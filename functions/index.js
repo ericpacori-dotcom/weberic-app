@@ -6,13 +6,14 @@ import { MercadoPagoConfig, Preference, Payment, PreApproval } from "mercadopago
 import express from "express";
 import cors from "cors";
 
-// Rutas de suscripción
+// Rutas de suscripción (Asegúrate de que este archivo exista en la carpeta routes)
 import paymentRoutes from "./routes/payment.routes.js"; 
 
 admin.initializeApp();
 const db = admin.firestore();
 
 // --- CREDENCIALES ---
+// Este es el Token que me pasaste. Asegúrate de que coincida con el de payment.controller.js
 const client = new MercadoPagoConfig({ 
     accessToken: "APP_USR-4746731218403713-092514-08fc48a44097fcff0ff347c161166c48-2695806238" 
 });
@@ -21,19 +22,22 @@ const client = new MercadoPagoConfig({
 async function unlockContentForUser(userId, courseId) {
     try {
         const userRef = db.collection("users").doc(userId);
-        if (courseId === 'SUB-PREMIUM-MONTHLY') {
+        
+        // Si es suscripción, activamos el flag isSubscribed
+        if (courseId === 'SUB-PREMIUM-MONTHLY' || courseId === 'SUB-PREMIUM-YEARLY') {
             await userRef.set({ 
                 isSubscribed: true,
-                subscriptionSource: 'backend_verified', 
+                subscriptionSource: 'mercadopago_webhook', 
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
         } else {
+            // Si es curso individual, lo agregamos al array
             await userRef.set({ 
                 purchasedCourses: admin.firestore.FieldValue.arrayUnion(courseId),
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
         }
-        logger.info(`✅ Contenido desbloqueado para ${userId}`);
+        logger.info(`✅ Contenido desbloqueado para ${userId} (Plan: ${courseId})`);
         return true;
     } catch (error) {
         logger.error("Error en desbloqueo:", error);
@@ -48,48 +52,68 @@ const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 
-// --- NUEVA RUTA DE WEBHOOK PARA SUSCRIPCIONES ---
+// --- RUTA DE DIAGNÓSTICO (NUEVA) ---
+// Usa esto en tu navegador: https://us-central1-weberic-25da5.cloudfunctions.net/api/debug-planes
+app.get("/debug-planes", async (req, res) => {
+    try {
+        // Consultamos directamente a Mercado Pago qué planes ve este Token
+        const response = await fetch("https://api.mercadopago.com/preapproval_plan/search", {
+            headers: {
+                "Authorization": `Bearer ${client.accessToken}`
+            }
+        });
+        const data = await response.json();
+        
+        // Devolvemos la lista de planes encontrada
+        res.json({ 
+            mensaje: "Diagnóstico de Planes", 
+            token_usado: client.accessToken ? "Token Presente" : "Sin Token",
+            planes_encontrados: data 
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- RUTA DE WEBHOOK PARA SUSCRIPCIONES ---
 app.post("/payment/webhook", async (req, res) => {
     const { query, body } = req;
-    
-    // Mercado Pago envía el tipo en 'type' (notificaciones v2) o 'topic'
     const type = body.type || query.type;
     const id = body.data?.id || query.id;
 
+    console.log(`Webhook recibido. Tipo: ${type}, ID: ${id}`);
+
     try {
-        // Manejamos específicamente suscripciones (PreApprovals)
+        // Manejo de Suscripciones (preapproval)
         if (type === "subscription_preapproval" && id) {
             const preapproval = new PreApproval(client);
             const subDetails = await preapproval.get({ id });
 
-            // 'authorized' indica que el pago de la suscripción fue exitoso
+            // 'authorized' es el estado cuando el pago se realiza correctamente
             if (subDetails.status === "authorized") {
                 const userId = subDetails.external_reference;
                 if (userId) {
                     await unlockContentForUser(userId, "SUB-PREMIUM-MONTHLY");
-                    logger.info(`⭐ Membresía activada vía Webhook: ${userId}`);
                 }
             }
         }
-        
-        // Responder siempre 200 para confirmar recepción
         res.status(200).send("OK");
     } catch (error) {
-        logger.error("Error en Webhook de suscripción:", error);
+        logger.error("Error en Webhook Suscripción:", error);
         res.status(500).send("Error");
     }
 });
 
-// Rutas adicionales de pago
+// Rutas de creación de pagos (importadas)
 app.use("/payment", paymentRoutes);
 
 // Exportar la API principal
 export const api = onRequest(app);
 
+
 // ==========================================
 //  2. FUNCIONES DE PAGO ÚNICO (PREFERENCES)
 // ==========================================
-
 export const createOrder = onRequest({ cors: true }, async (req, res) => {
     try {
         const { title, price, id, userId } = req.body;
@@ -127,7 +151,7 @@ export const createOrder = onRequest({ cors: true }, async (req, res) => {
     }
 });
 
-// Webhook para pagos únicos (Preferencias)
+// Webhook para pagos únicos
 export const mpWebhook = onRequest({ cors: true }, async (req, res) => {
     const paymentId = req.query.id || req.query['data.id'];
     const topic = req.query.topic || req.query.type;
@@ -153,7 +177,7 @@ export const mpWebhook = onRequest({ cors: true }, async (req, res) => {
 export const verifyPayPalEndpoint = onRequest({ cors: true }, async (req, res) => {
     const { userId, isSubscription } = req.body;
     try {
-        // Lógica de validación simplificada (asumiendo aprobación previa en frontend)
+        // TODO: Implementar validación real con API de PayPal usando orderID
         const finalCourseId = isSubscription ? 'SUB-PREMIUM-MONTHLY' : 'general';
         await unlockContentForUser(userId, finalCourseId);
         return res.json({ success: true });
