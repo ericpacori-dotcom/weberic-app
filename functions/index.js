@@ -2,18 +2,12 @@
 import { onRequest } from "firebase-functions/v2/https";
 import logger from "firebase-functions/logger";
 import admin from "firebase-admin";
-import { MercadoPagoConfig, Preference, Payment, PreApproval } from "mercadopago";
 import express from "express";
 import cors from "cors";
-import paymentRoutes from "./routes/payment.routes.js"; 
 
+// Inicializamos Firebase Admin
 admin.initializeApp();
 const db = admin.firestore();
-
-// 1. CONFIGURACIÓN MERCADO PAGO (Usando .env)
-const client = new MercadoPagoConfig({ 
-    accessToken: process.env.MP_ACCESS_TOKEN 
-});
 
 // --- HELPER: Obtener Token de PayPal (Usando .env) ---
 async function getPayPalAccessToken() {
@@ -44,7 +38,7 @@ async function unlockContentForUser(userId, courseId) {
         if (courseId === 'SUB-PREMIUM-MONTHLY' || courseId === 'SUB-PREMIUM-YEARLY') {
             await userRef.set({ 
                 isSubscribed: true,
-                subscriptionSource: 'webhook_verified', 
+                subscriptionSource: 'paypal_verified', 
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
         } else {
@@ -62,47 +56,7 @@ async function unlockContentForUser(userId, courseId) {
 }
 
 // ==========================================
-//  API EXPRESS
-// ==========================================
-const app = express();
-app.use(cors({ origin: true }));
-app.use(express.json());
-
-// Ruta de diagnóstico para verificar que las variables .env se cargan bien
-app.get("/debug-env", (req, res) => {
-    res.json({
-        mp_configured: !!process.env.MP_ACCESS_TOKEN,
-        paypal_configured: !!process.env.PAYPAL_CLIENT_ID,
-        domain: process.env.APP_DOMAIN
-    });
-});
-
-app.post("/payment/webhook", async (req, res) => {
-    const { query, body } = req;
-    const type = body.type || query.type;
-    const id = body.data?.id || query.id;
-
-    try {
-        if (type === "subscription_preapproval" && id) {
-            const preapproval = new PreApproval(client);
-            const subDetails = await preapproval.get({ id });
-            if (subDetails.status === "authorized") {
-                const userId = subDetails.external_reference;
-                if (userId) await unlockContentForUser(userId, "SUB-PREMIUM-MONTHLY");
-            }
-        }
-        res.status(200).send("OK");
-    } catch (error) {
-        logger.error("Error Webhook:", error);
-        res.status(500).send("Error");
-    }
-});
-
-app.use("/payment", paymentRoutes);
-export const api = onRequest(app);
-
-// ==========================================
-//  VERIFICACIÓN PAYPAL (NUEVA Y SEGURA)
+//  VERIFICACIÓN PAYPAL (ÚNICA RUTA DE PAGO)
 // ==========================================
 export const verifyPayPalEndpoint = onRequest({ cors: true }, async (req, res) => {
     const { userId, orderID, subscriptionID, isSubscription, planType } = req.body;
